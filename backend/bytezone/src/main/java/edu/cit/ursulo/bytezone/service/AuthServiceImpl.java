@@ -10,6 +10,7 @@ import edu.cit.ursulo.bytezone.repository.UserRepository;
 import edu.cit.ursulo.bytezone.security.JwtService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -27,6 +28,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email is already registered");
@@ -53,6 +55,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Invalid email or password"));

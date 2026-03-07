@@ -62,9 +62,10 @@ export default function ByteZoneSignUp() {
       }, 1200);
     } catch (err) {
       const message =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
-        "Registration failed.";
+  (typeof err.response?.data === "string" && err.response.data) ||
+  err.response?.data?.message ||
+  err.response?.data?.error ||
+  "Registration failed.";
       setError(message);
     } finally {
       setLoading(false);
