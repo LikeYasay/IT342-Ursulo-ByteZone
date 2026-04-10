@@ -1,3 +1,5 @@
+ByteZone is a full-stack computer café management system that centralizes station reservations, session timing, snack ordering, announcements, payment tracking, and transaction history in one platform. It supports User, Staff, and Admin roles, with a Spring Boot + MySQL backend, React web app, and Android Kotlin mobile app to improve café operations and customer experience.
+
 ## 🛠 Git Workflow (Best Practices)
 
 ### 1. Check Current Status
