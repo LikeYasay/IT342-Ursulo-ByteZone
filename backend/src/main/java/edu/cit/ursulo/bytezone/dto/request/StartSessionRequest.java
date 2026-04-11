@@ -5,34 +5,37 @@ import jakarta.validation.constraints.NotNull;
 
 public class StartSessionRequest {
 
-    @NotNull
-    private Long stationId;
-
-    @NotNull
+    @NotNull(message = "User ID is required")
     private Long userId;
 
-    @NotNull
-    @Min(30)
+    @NotNull(message = "Station ID is required")
+    private Long stationId;
+
+    @NotNull(message = "Duration is required")
+    @Min(value = 1, message = "Duration must be at least 1 minute")
     private Integer durationMinutes;
 
-    public Long getStationId() {
-        return stationId;
+    public StartSessionRequest() {
     }
 
     public Long getUserId() {
         return userId;
     }
 
+    public Long getStationId() {
+        return stationId;
+    }
+
     public Integer getDurationMinutes() {
         return durationMinutes;
     }
 
-    public void setStationId(Long stationId) {
-        this.stationId = stationId;
-    }
-
     public void setUserId(Long userId) {
         this.userId = userId;
+    }
+
+    public void setStationId(Long stationId) {
+        this.stationId = stationId;
     }
 
     public void setDurationMinutes(Integer durationMinutes) {

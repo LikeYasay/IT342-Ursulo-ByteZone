@@ -3,8 +3,85 @@ package edu.cit.ursulo.bytezone.service;
 import edu.cit.ursulo.bytezone.dto.request.LoginRequest;
 import edu.cit.ursulo.bytezone.dto.request.RegisterRequest;
 import edu.cit.ursulo.bytezone.dto.response.AuthResponse;
+import edu.cit.ursulo.bytezone.dto.response.UserResponse;
+import edu.cit.ursulo.bytezone.entity.Role;
+import edu.cit.ursulo.bytezone.entity.User;
+import edu.cit.ursulo.bytezone.repository.UserRepository;
+import edu.cit.ursulo.bytezone.security.JwtService;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
-public interface AuthService {
-    AuthResponse register(RegisterRequest request);
-    AuthResponse login(LoginRequest request);
+@Service
+public class AuthService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
+
+    public AuthService(UserRepository userRepository,
+                       PasswordEncoder passwordEncoder,
+                       JwtService jwtService,
+                       AuthenticationManager authenticationManager) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
+        this.authenticationManager = authenticationManager;
+    }
+
+    public AuthResponse register(RegisterRequest request) {
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new RuntimeException("Email is already in use");
+        }
+
+        User user = new User();
+        user.setFullName(request.getFullName());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(Role.USER);
+
+        if (user.getTournamentWins() == null) {
+            user.setTournamentWins(0);
+        }
+
+        User savedUser = userRepository.save(user);
+
+        String token = jwtService.generateToken(savedUser.getEmail());
+
+        return new AuthResponse(
+                token,
+                mapToUserResponse(savedUser)
+        );
+    }
+
+    public AuthResponse login(LoginRequest request) {
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getEmail(),
+                        request.getPassword()
+                )
+        );
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        String token = jwtService.generateToken(user.getEmail());
+
+        return new AuthResponse(
+                token,
+                mapToUserResponse(user)
+        );
+    }
+
+    private UserResponse mapToUserResponse(User user) {
+        return new UserResponse(
+                user.getId(),
+                user.getFullName(),
+                user.getEmail(),
+                user.getRole().name(),
+                user.getTournamentWins()
+        );
+    }
 }
