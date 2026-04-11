@@ -1,13 +1,21 @@
-import axios from "axios";
-
-const API_BASE_URL = "http://localhost:8080/api/auth";
+import api from "./api";
 
 export const loginUser = async (payload) => {
-  const response = await axios.post(`${API_BASE_URL}/login`, payload);
+  const response = await api.post("/api/auth/login", payload);
   return response.data;
 };
 
 export const registerUser = async (payload) => {
-  const response = await axios.post(`${API_BASE_URL}/register`, payload);
+  const response = await api.post("/api/auth/register", payload);
   return response.data;
+};
+
+export const getCurrentUser = async () => {
+  const response = await api.get("/api/me");
+  return response.data;
+};
+
+export const logoutUser = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
 };

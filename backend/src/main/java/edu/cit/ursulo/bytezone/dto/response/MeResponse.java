@@ -1,6 +1,6 @@
 package edu.cit.ursulo.bytezone.dto.response;
 
-public class UserResponse {
+public class MeResponse {
 
     private Long id;
     private String fullName;
@@ -8,10 +8,10 @@ public class UserResponse {
     private String role;
     private Integer tournamentWins;
 
-    public UserResponse() {
+    public MeResponse() {
     }
 
-    public UserResponse(Long id, String fullName, String email, String role, Integer tournamentWins) {
+    public MeResponse(Long id, String fullName, String email, String role, Integer tournamentWins) {
         this.id = id;
         this.fullName = fullName;
         this.email = email;

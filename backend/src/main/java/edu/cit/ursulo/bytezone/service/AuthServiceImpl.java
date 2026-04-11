@@ -48,7 +48,8 @@ public class AuthServiceImpl implements AuthService {
                 savedUser.getId(),
                 savedUser.getFullName(),
                 savedUser.getEmail(),
-                savedUser.getRole().name()
+                savedUser.getRole().name(),
+                savedUser.getTournamentWins()
         );
 
         return new AuthResponse(token, userResponse);
@@ -70,7 +71,8 @@ public class AuthServiceImpl implements AuthService {
                 user.getId(),
                 user.getFullName(),
                 user.getEmail(),
-                user.getRole().name()
+                user.getRole().name(),
+                user.getTournamentWins()
         );
 
         return new AuthResponse(token, userResponse);

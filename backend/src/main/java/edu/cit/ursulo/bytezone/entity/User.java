@@ -1,8 +1,10 @@
 package edu.cit.ursulo.bytezone.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Entity
 @Table(name = "users")
 public class User {
@@ -24,7 +26,10 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
-    @Column(name = "created_at")
+    @Column(name = "tournament_wins", nullable = false)
+    private Integer tournamentWins = 0;
+
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     public User() {
@@ -33,8 +38,13 @@ public class User {
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
+
         if (this.role == null) {
             this.role = Role.USER;
+        }
+
+        if (this.tournamentWins == null) {
+            this.tournamentWins = 0;
         }
     }
 
@@ -56,6 +66,10 @@ public class User {
 
     public Role getRole() {
         return role;
+    }
+
+    public Integer getTournamentWins() {
+        return tournamentWins;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -80,6 +94,10 @@ public class User {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public void setTournamentWins(Integer tournamentWins) {
+        this.tournamentWins = tournamentWins;
     }
 
     public void setCreatedAt(LocalDateTime createdAt) {
