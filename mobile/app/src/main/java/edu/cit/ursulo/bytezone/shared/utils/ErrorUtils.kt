@@ -1,4 +1,4 @@
-package edu.cit.ursulo.bytezone
+package edu.cit.ursulo.bytezone.shared.utils
 
 import org.json.JSONObject
 import retrofit2.Response

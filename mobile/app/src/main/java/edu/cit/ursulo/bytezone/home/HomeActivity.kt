@@ -1,9 +1,10 @@
-package edu.cit.ursulo.bytezone
+package edu.cit.ursulo.bytezone.home
 
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import edu.cit.ursulo.bytezone.SessionManager
+import edu.cit.ursulo.bytezone.auth.LoginActivity
+import edu.cit.ursulo.bytezone.auth.SessionManager
 import edu.cit.ursulo.bytezone.databinding.ActivityHomeBinding
 
 class HomeActivity : AppCompatActivity() {
