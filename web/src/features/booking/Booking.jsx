@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createReservation, getMyReservations, getStations } from "../services/bookingService";
-import { logoutUser } from "../services/authService";
+import { createReservation, getMyReservations, getStations } from "./bookingService";
+import { logoutUser } from "../auth/authService";
 
 const CYAN = "#39d5ff";
 const DARK_BG = "#000000";

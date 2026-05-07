@@ -1,4 +1,4 @@
-import api from "./api";
+import api from "../../shared/services/api";
 
 export const getStations = async () => {
   const response = await api.get("/api/stations");
