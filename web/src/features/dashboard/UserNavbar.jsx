@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { logoutUser } from "../services/authService";
+import { logoutUser } from "../auth/authService";
 
 const CYAN = "#39d5ff";
 const BORDER = "#1a1a1a";

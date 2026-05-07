@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { registerUser } from "../services/authService";
-import PublicNavbar from "../components/PublicNavbar";
+import { registerUser } from "./authService";
+import PublicNavbar from "../../shared/components/PublicNavbar";
 
 const CYAN = "#39d5ff";
 const DARK_BG = "#000000";

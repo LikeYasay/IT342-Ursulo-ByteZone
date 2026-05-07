@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getSnacks, createOrder, getMyOrders } from "../services/orderService";
-import { getStations } from "../services/bookingService";
-import { logoutUser } from "../services/authService";
+import { getSnacks, createOrder, getMyOrders } from "./orderService";
+import { getStations } from "../booking/bookingService";
+import { logoutUser } from "../auth/authService";
 
 const CYAN = "#39d5ff";
 const DARK_BG = "#000000";

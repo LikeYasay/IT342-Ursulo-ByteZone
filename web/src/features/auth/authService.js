@@ -1,4 +1,4 @@
-import api from "./api";
+import api from "../../shared/services/api";
 
 export const loginUser = async (payload) => {
   const response = await api.post("/api/auth/login", payload);

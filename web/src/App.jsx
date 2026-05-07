@@ -1,11 +1,11 @@
 import { Routes, Route } from "react-router-dom";
-import ByteZoneLanding from "./pages/Landing.jsx";
-import ByteZoneLogin from "./pages/Login.jsx";
-import ByteZoneSignUp from "./pages/Register.jsx";
-import UserDashboard from "./pages/UserDashboard.jsx";
-import Booking from "./pages/Booking.jsx";
-import Order from "./pages/Order.jsx";
-import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import ByteZoneLanding from "./features/public/Landing.jsx";
+import ByteZoneLogin from "./features/auth/Login.jsx";
+import ByteZoneSignUp from "./features/auth/Register.jsx";
+import UserDashboard from "./features/dashboard/UserDashboard.jsx";
+import Booking from "./features/booking/Booking.jsx";
+import Order from "./features/orders/Order.jsx";
+import ProtectedRoute from "./shared/components/ProtectedRoute.jsx";
 
 function App() {
   return (
