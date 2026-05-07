@@ -1,7 +1,7 @@
 package edu.cit.ursulo.bytezone.security;
 
-import edu.cit.ursulo.bytezone.entity.User;
-import edu.cit.ursulo.bytezone.repository.UserRepository;
+import edu.cit.ursulo.bytezone.users.User;
+import edu.cit.ursulo.bytezone.users.UserRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
