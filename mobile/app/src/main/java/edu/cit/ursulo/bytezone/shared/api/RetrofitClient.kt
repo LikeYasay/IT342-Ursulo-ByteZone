@@ -1,5 +1,6 @@
-package edu.cit.ursulo.bytezone
+package edu.cit.ursulo.bytezone.shared.api
 
+import edu.cit.ursulo.bytezone.auth.AuthApiService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit

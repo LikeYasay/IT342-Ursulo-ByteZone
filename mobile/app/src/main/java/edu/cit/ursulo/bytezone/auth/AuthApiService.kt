@@ -1,4 +1,4 @@
-package edu.cit.ursulo.bytezone
+package edu.cit.ursulo.bytezone.auth
 
 import retrofit2.Response
 import retrofit2.http.Body

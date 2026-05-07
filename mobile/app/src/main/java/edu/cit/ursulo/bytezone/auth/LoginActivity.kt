@@ -1,4 +1,4 @@
-package edu.cit.ursulo.bytezone
+package edu.cit.ursulo.bytezone.auth
 
 import android.content.Intent
 import android.os.Bundle
@@ -6,11 +6,10 @@ import android.util.Patterns
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import edu.cit.ursulo.bytezone.SessionManager
 import edu.cit.ursulo.bytezone.databinding.ActivityLoginBinding
-import edu.cit.ursulo.bytezone.LoginRequest
-import edu.cit.ursulo.bytezone.RetrofitClient
-import edu.cit.ursulo.bytezone.ErrorUtils
+import edu.cit.ursulo.bytezone.home.HomeActivity
+import edu.cit.ursulo.bytezone.shared.api.RetrofitClient
+import edu.cit.ursulo.bytezone.shared.utils.ErrorUtils
 import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {

@@ -1,4 +1,4 @@
-package edu.cit.ursulo.bytezone
+package edu.cit.ursulo.bytezone.auth
 
 import android.content.Context
 

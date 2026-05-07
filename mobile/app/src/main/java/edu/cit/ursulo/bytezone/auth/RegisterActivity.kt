@@ -1,4 +1,4 @@
-package edu.cit.ursulo.bytezone
+package edu.cit.ursulo.bytezone.auth
 
 import android.os.Bundle
 import android.util.Patterns
@@ -6,9 +6,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import edu.cit.ursulo.bytezone.databinding.ActivityRegisterBinding
-import edu.cit.ursulo.bytezone.RegisterRequest
-import edu.cit.ursulo.bytezone.RetrofitClient
-import edu.cit.ursulo.bytezone.ErrorUtils
+import edu.cit.ursulo.bytezone.shared.api.RetrofitClient
+import edu.cit.ursulo.bytezone.shared.utils.ErrorUtils
 import kotlinx.coroutines.launch
 
 class RegisterActivity : AppCompatActivity() {
