@@ -886,6 +886,11 @@ export default function UserDashboard() {
                     onClick={() => navigate("/order")}
                   />
                   <QuickActionBtn
+                    label="Transaction History"
+                    icon="💳"
+                    onClick={() => navigate("/transactions")}
+                  />
+                  <QuickActionBtn
                     label="View Tournaments"
                     icon="🏆"
                     onClick={() => {}}
