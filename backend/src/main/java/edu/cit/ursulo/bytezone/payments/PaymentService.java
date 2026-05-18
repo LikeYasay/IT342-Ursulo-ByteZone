@@ -47,4 +47,58 @@ public class PaymentService {
 
         return paymentRepository.save(payment);
     }
+
+    @Transactional
+    public Payment startSandboxProcessing(Long paymentId) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new RuntimeException("Payment not found"));
+
+        if (payment.getStatus() == PaymentStatus.PAID) {
+            throw new RuntimeException("Payment is already paid");
+        }
+
+        if (payment.getStatus() == PaymentStatus.CANCELLED || payment.getStatus() == PaymentStatus.FAILED) {
+            throw new RuntimeException("Payment can no longer be processed");
+        }
+
+        payment.setMethod(PaymentMethod.SANDBOX);
+        payment.setStatus(PaymentStatus.PROCESSING);
+
+        return paymentRepository.save(payment);
+    }
+
+    @Transactional
+    public Payment applySandboxResult(Long paymentId, SandboxPaymentResultRequest request) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new RuntimeException("Payment not found"));
+
+        if (payment.getStatus() == PaymentStatus.PAID) {
+            throw new RuntimeException("Payment is already paid");
+        }
+
+        PaymentStatus resultStatus = request.getStatus();
+
+        if (
+                resultStatus != PaymentStatus.PAID &&
+                resultStatus != PaymentStatus.FAILED &&
+                resultStatus != PaymentStatus.CANCELLED
+        ) {
+            throw new RuntimeException("Sandbox result must be PAID, FAILED, or CANCELLED");
+        }
+
+        payment.setMethod(PaymentMethod.SANDBOX);
+        payment.setStatus(resultStatus);
+
+        if (request.getReferenceNo() != null && !request.getReferenceNo().isBlank()) {
+            payment.setReferenceNo(request.getReferenceNo());
+        } else {
+            payment.setReferenceNo("BZ-SANDBOX-" + payment.getId());
+        }
+
+        if (resultStatus == PaymentStatus.PAID) {
+            payment.setPaidAt(LocalDateTime.now());
+        }
+
+        return paymentRepository.save(payment);
+    }
 }

@@ -55,4 +55,25 @@ public class PaymentController {
                 "Payment confirmed successfully"
         ));
     }
+
+    @PutMapping("/{paymentId}/sandbox/process")
+    public ResponseEntity<ApiResponse<Payment>> startSandboxProcessing(
+            @PathVariable Long paymentId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                paymentService.startSandboxProcessing(paymentId),
+                "Sandbox payment processing started"
+        ));
+    }
+
+    @PutMapping("/{paymentId}/sandbox/result")
+    public ResponseEntity<ApiResponse<Payment>> applySandboxResult(
+            @PathVariable Long paymentId,
+            @Valid @RequestBody SandboxPaymentResultRequest request
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                paymentService.applySandboxResult(paymentId, request),
+                "Sandbox payment result recorded successfully"
+        ));
+    }
 }
