@@ -11,6 +11,7 @@ const MUTED = "#8a8f98";
 const NAV_ITEMS = [
   { label: "Dashboard", icon: "⊞", path: "/admindashboard" },
   { label: "User Management", icon: "👥", path: "/admin/usermanagement" },
+  { label: "Reservations", icon: "📅", path: "/admin/reservations" },
   { label: "Announcements", icon: "📢", path: "/admin/announcements" },
   { label: "Extending Time", icon: "⏱️", path: "/admin/extendinghours" },
   { label: "Snacks", icon: "🍔", path: "/admin/snacks" },
