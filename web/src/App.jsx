@@ -7,6 +7,14 @@ import Booking from "./features/booking/Booking.jsx";
 import Order from "./features/orders/Order.jsx";
 import AdminDashboard from "./features/admin/AdminDashboard.jsx";
 import RoleProtectedRoute from "./shared/components/RoleProtectedRoute.jsx";
+import AdminUserManagement from "./features/admin/AdminUserManagement.jsx";
+import AdminAnnouncements from "./features/admin/AdminAnnouncements.jsx";
+import AdminExtendingTime from "./features/admin/AdminExtendingTime.jsx";
+import AdminSnacks from "./features/admin/AdminSnacks.jsx";
+import AdminOrders from "./features/admin/AdminOrders.jsx";
+import AdminTransactionHistory from "./features/admin/AdminTransactionHistory.jsx";
+import AdminPendingPayments from "./features/admin/AdminPendingPayments.jsx";
+
 
 function App() {
   return (
@@ -47,6 +55,69 @@ function App() {
         element={
           <RoleProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
             <AdminDashboard />
+          </RoleProtectedRoute>
+        }
+      />  
+
+      <Route
+        path="/admin/usermanagement"
+        element={
+          <RoleProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+            <AdminUserManagement />
+          </RoleProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/announcements"
+        element={
+          <RoleProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+            <AdminAnnouncements />
+          </RoleProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/extendinghours"
+        element={
+          <RoleProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+            <AdminExtendingTime />
+          </RoleProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/snacks"
+        element={
+          <RoleProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+            <AdminSnacks />
+          </RoleProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/orders"
+        element={
+          <RoleProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+            <AdminOrders />
+          </RoleProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/transactionhistory"
+        element={
+          <RoleProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+            <AdminTransactionHistory />
+          </RoleProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/pendingpayments"
+        element={
+          <RoleProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+            <AdminPendingPayments />
           </RoleProtectedRoute>
         }
       />
