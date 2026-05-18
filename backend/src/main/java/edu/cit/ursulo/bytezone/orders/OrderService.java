@@ -12,6 +12,7 @@ import edu.cit.ursulo.bytezone.stations.StationRepository;
 import edu.cit.ursulo.bytezone.users.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import edu.cit.ursulo.bytezone.payments.PaymentMethod;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -48,7 +49,7 @@ public class OrderService {
         SnackOrder order = new SnackOrder();
         order.setUser(user);
         order.setStation(station);
-        order.setPaymentMethod(request.getPaymentMethod());
+        order.setPaymentMethod(PaymentMethod.SANDBOX);
         order.setStatus(OrderStatus.PENDING);
 
         List<OrderItem> orderItems = new ArrayList<>();
@@ -82,8 +83,8 @@ public class OrderService {
         payment.setType(PaymentType.SNACK_ORDER);
         payment.setReferenceId(saved.getId());
         payment.setAmount(saved.getTotal());
-        payment.setStatus(PaymentStatus.PENDING);
-        payment.setMethod(request.getPaymentMethod());
+        payment.setStatus(PaymentStatus.INITIATED);
+        payment.setMethod(PaymentMethod.SANDBOX);
         paymentRepository.save(payment);
 
         return saved;
