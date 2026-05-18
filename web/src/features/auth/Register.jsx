@@ -1,3 +1,4 @@
+import { getRedirectPathByRole } from "./authRedirect";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { registerUser } from "./authService";
@@ -54,7 +55,7 @@ export default function ByteZoneSignUp() {
     localStorage.setItem("user", JSON.stringify(response.user));
 
       setSuccess("Registration successful!");
-      navigate("/dashboard");
+      navigate(getRedirectPathByRole(response.user?.role));
     } catch (err) {
       const message =
         err.response?.data?.message ||

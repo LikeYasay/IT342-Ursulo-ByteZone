@@ -1,3 +1,4 @@
+import { getRedirectPathByRole } from "./authRedirect";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginUser } from "./authService";
@@ -41,7 +42,7 @@ export default function ByteZoneLogin() {
     localStorage.setItem("token", response.accessToken);
     localStorage.setItem("user", JSON.stringify(response.user));
 
-      navigate("/dashboard");
+      navigate(getRedirectPathByRole(response.user?.role));
     } catch (err) {
       const message =
         err.response?.data?.message ||
