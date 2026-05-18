@@ -10,4 +10,6 @@ public interface CafeSessionRepository extends JpaRepository<CafeSession, Long> 
     Optional<CafeSession> findByStationIdAndStatus(Long stationId, SessionStatus status);
 
     List<CafeSession> findByStatusOrderByCreatedAtDesc(SessionStatus status);
+
+    long countByStatus(SessionStatus status);
 }
