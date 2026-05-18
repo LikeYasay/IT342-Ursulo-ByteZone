@@ -5,7 +5,6 @@ import ByteZoneSignUp from "./features/auth/Register.jsx";
 import UserDashboard from "./features/dashboard/UserDashboard.jsx";
 import Booking from "./features/booking/Booking.jsx";
 import Order from "./features/orders/Order.jsx";
-import ProtectedRoute from "./shared/components/ProtectedRoute.jsx";
 import AdminDashboard from "./features/admin/AdminDashboard.jsx";
 import RoleProtectedRoute from "./shared/components/RoleProtectedRoute.jsx";
 
@@ -19,27 +18,27 @@ function App() {
       <Route
         path="/dashboard"
         element={
-          <ProtectedRoute>
+          <RoleProtectedRoute allowedRoles={["USER"]}>
             <UserDashboard />
-          </ProtectedRoute>
+          </RoleProtectedRoute>
         }
       />
 
       <Route
         path="/booking"
         element={
-          <ProtectedRoute>
+          <RoleProtectedRoute allowedRoles={["USER"]}>
             <Booking />
-          </ProtectedRoute>
+          </RoleProtectedRoute>
         }
       />
 
       <Route
         path="/order"
         element={
-          <ProtectedRoute>
+          <RoleProtectedRoute allowedRoles={["USER"]}>
             <Order />
-          </ProtectedRoute>
+          </RoleProtectedRoute>
         }
       />
 
