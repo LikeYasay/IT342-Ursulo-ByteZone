@@ -54,4 +54,11 @@ public class SessionController {
                 ApiResponse.success(sessionService.extend(sessionId, request), "Session extended successfully")
         );
     }
+
+        @GetMapping("/me/active")
+    public ResponseEntity<ApiResponse<CafeSession>> getMyActiveSession() {
+        return ResponseEntity.ok(
+                ApiResponse.success(sessionService.getMyActiveSession(), "My active session fetched successfully")
+        );
+    }
 }

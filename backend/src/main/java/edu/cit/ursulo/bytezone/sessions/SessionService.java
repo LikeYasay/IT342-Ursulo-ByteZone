@@ -12,6 +12,7 @@ import edu.cit.ursulo.bytezone.payments.PaymentMethod;
 import edu.cit.ursulo.bytezone.payments.PaymentRepository;
 import edu.cit.ursulo.bytezone.payments.PaymentStatus;
 import edu.cit.ursulo.bytezone.payments.PaymentType;
+import edu.cit.ursulo.bytezone.auth.CurrentUserService;
 
 import java.util.List;
 import java.time.LocalDateTime;
@@ -23,17 +24,20 @@ public class SessionService {
     private final StationRepository stationRepository;
     private final UserRepository userRepository;
     private final PaymentRepository paymentRepository;
+    private final CurrentUserService currentUserService;
 
-        public SessionService(CafeSessionRepository cafeSessionRepository,
+    public SessionService(CafeSessionRepository cafeSessionRepository,
                         StationRepository stationRepository,
                         UserRepository userRepository,
-                        PaymentRepository paymentRepository) {
+                        PaymentRepository paymentRepository,
+                        CurrentUserService currentUserService) {
         this.cafeSessionRepository = cafeSessionRepository;
         this.stationRepository = stationRepository;
         this.userRepository = userRepository;
         this.paymentRepository = paymentRepository;
+        this.currentUserService = currentUserService;
     }
-    
+
     @Transactional(readOnly = true)
     public List<CafeSession> getActiveSessions() {
         return cafeSessionRepository.findByStatusOrderByCreatedAtDesc(SessionStatus.ACTIVE);
@@ -105,5 +109,12 @@ public class SessionService {
         paymentRepository.save(payment);
 
         return saved;
+    }
+        @Transactional(readOnly = true)
+    public CafeSession getMyActiveSession() {
+        User user = currentUserService.getCurrentUser();
+
+        return cafeSessionRepository.findByUserIdAndStatus(user.getId(), SessionStatus.ACTIVE)
+                .orElse(null);
     }
 }

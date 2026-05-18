@@ -7,6 +7,8 @@ import java.util.Optional;
 
 public interface CafeSessionRepository extends JpaRepository<CafeSession, Long> {
 
+    Optional<CafeSession> findByUserIdAndStatus(Long userId, SessionStatus status);
+
     Optional<CafeSession> findByStationIdAndStatus(Long stationId, SessionStatus status);
 
     List<CafeSession> findByStatusOrderByCreatedAtDesc(SessionStatus status);
