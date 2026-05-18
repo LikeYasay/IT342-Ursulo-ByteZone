@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import AdminLayout from "./components/AdminLayout.jsx";
+import { getAdminUsers } from "./adminService";
+import { getStations } from "../booking/bookingService";
+
 import {
   endSession,
   extendSession,
   getActiveSessions,
+  startSession,
 } from "../sessions/sessionService";
 
 const CYAN = "#39d5ff";
@@ -17,11 +21,20 @@ export default function AdminExtendingTime() {
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
   const [error, setError] = useState("");
+  const [users, setUsers] = useState([]);
+  const [stations, setStations] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState("");
+  const [selectedStationId, setSelectedStationId] = useState("");
+  const [startDurationMinutes, setStartDurationMinutes] = useState(60);
+  const [starting, setStarting] = useState(false);
 
   useEffect(() => {
-    loadSessions();
+  loadPageData();
   }, []);
 
+  const loadPageData = async () => {
+  await Promise.all([loadSessions(), loadUsers(), loadStations()]);
+    };
   const loadSessions = async () => {
     try {
       setLoading(true);
@@ -35,6 +48,23 @@ export default function AdminExtendingTime() {
       setLoading(false);
     }
   };
+    const loadUsers = async () => {
+    try {
+        const response = await getAdminUsers();
+        setUsers(response.data || []);
+    } catch (err) {
+        setError(err.response?.data?.message || "Failed to load users.");
+    }
+    };
+
+    const loadStations = async () => {
+    try {
+        const response = await getStations();
+        setStations(response.data || []);
+    } catch (err) {
+        setError(err.response?.data?.message || "Failed to load stations.");
+    }
+    };
 
   const filteredSessions = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -94,151 +124,266 @@ export default function AdminExtendingTime() {
         setSavingId(null);
     }
     };
+        const handleStartSession = async () => {
+    if (!selectedUserId || !selectedStationId) {
+        setError("Please select a user and station.");
+        return;
+    }
+
+    try {
+        setStarting(true);
+        setError("");
+
+        await startSession({
+        userId: Number(selectedUserId),
+        stationId: Number(selectedStationId),
+        durationMinutes: Number(startDurationMinutes),
+        });
+
+        setSelectedUserId("");
+        setSelectedStationId("");
+        setStartDurationMinutes(60);
+
+        await loadPageData();
+        alert("Session started successfully.");
+    } catch (err) {
+        setError(err.response?.data?.message || "Failed to start session.");
+    } finally {
+        setStarting(false);
+    }
+    };
 
   return (
-    <AdminLayout title="Extending Time">
+  <AdminLayout title="Extending Time">
+    <div
+      style={{
+        background: "#111",
+        border: "1px solid #2a2a2a",
+        borderRadius: "14px",
+        padding: "18px",
+        marginBottom: "18px",
+      }}
+    >
+      <h3 style={{ color: CYAN, marginBottom: "12px" }}>Start Session</h3>
+
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 160px 160px auto",
+          gridTemplateColumns: "1fr 1fr 160px auto",
           gap: "12px",
-          marginBottom: "18px",
           alignItems: "center",
         }}
       >
-        <input
-          type="text"
-          placeholder="Search active sessions..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+        <select
+          value={selectedUserId}
+          onChange={(e) => setSelectedUserId(e.target.value)}
           style={inputStyle}
-        />
+        >
+          <option value="">Select user</option>
+          {users
+            .filter((user) => user.role === "USER")
+            .map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.fullName} - {user.email}
+              </option>
+            ))}
+        </select>
+
+        <select
+          value={selectedStationId}
+          onChange={(e) => setSelectedStationId(e.target.value)}
+          style={inputStyle}
+        >
+          <option value="">Select station</option>
+          {stations
+            .filter((station) => station.status === "AVAILABLE")
+            .map((station) => (
+              <option key={station.id} value={station.id}>
+                {station.stationNo || `Station ${station.id}`}
+              </option>
+            ))}
+        </select>
 
         <input
           type="number"
           min="1"
-          value={extensionMinutes}
-          onChange={(e) => setExtensionMinutes(e.target.value)}
+          value={startDurationMinutes}
+          onChange={(e) => setStartDurationMinutes(e.target.value)}
           placeholder="Minutes"
           style={inputStyle}
         />
 
-        <input
-          type="number"
-          min="1"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="Amount"
-          style={inputStyle}
-        />
-
-        <button onClick={loadSessions} style={primaryButtonStyle}>
-          Refresh
+        <button
+          disabled={starting}
+          onClick={handleStartSession}
+          style={primaryButtonStyle}
+        >
+          {starting ? "Starting..." : "Start"}
         </button>
       </div>
+    </div>
 
-      <p style={{ color: MUTED, marginBottom: "16px", fontSize: "13px" }}>
-        Extending playtime will update the session end time and create a sandbox
-        payment record.
-      </p>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 160px 160px auto",
+        gap: "12px",
+        marginBottom: "18px",
+        alignItems: "center",
+      }}
+    >
+      <input
+        type="text"
+        placeholder="Search active sessions..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        style={inputStyle}
+      />
 
-      {error && (
-        <div style={{ color: "#ff9b9b", marginBottom: "16px", fontWeight: 700 }}>
-          {error}
-        </div>
-      )}
+      <input
+        type="number"
+        min="1"
+        value={extensionMinutes}
+        onChange={(e) => setExtensionMinutes(e.target.value)}
+        placeholder="Minutes"
+        style={inputStyle}
+      />
 
-      {loading ? (
-        <p style={{ color: MUTED }}>Loading active sessions...</p>
-      ) : (
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
-            <thead>
-              <tr style={{ background: "#111" }}>
-                {["ID", "User", "Station", "Start Time", "End Time", "Status", "Action"].map(
-                  (header) => (
-                    <th key={header} style={thStyle}>
-                      {header}
-                    </th>
-                  )
-                )}
+      <input
+        type="number"
+        min="1"
+        value={amount}
+        onChange={(e) => setAmount(e.target.value)}
+        placeholder="Amount"
+        style={inputStyle}
+      />
+
+      <button onClick={loadSessions} style={primaryButtonStyle}>
+        Refresh
+      </button>
+    </div>
+
+    <p style={{ color: MUTED, marginBottom: "16px", fontSize: "13px" }}>
+      Extending playtime will update the session end time and create a sandbox
+      payment record.
+    </p>
+
+    {error && (
+      <div style={{ color: "#ff9b9b", marginBottom: "16px", fontWeight: 700 }}>
+        {error}
+      </div>
+    )}
+
+    {loading ? (
+      <p style={{ color: MUTED }}>Loading active sessions...</p>
+    ) : (
+      <div style={{ overflowX: "auto" }}>
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            fontSize: "13px",
+          }}
+        >
+          <thead>
+            <tr style={{ background: "#111" }}>
+              {[
+                "ID",
+                "User",
+                "Station",
+                "Start Time",
+                "End Time",
+                "Status",
+                "Action",
+              ].map((header) => (
+                <th key={header} style={thStyle}>
+                  {header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+
+          <tbody>
+            {filteredSessions.length === 0 ? (
+              <tr>
+                <td
+                  colSpan="7"
+                  style={{
+                    padding: "24px",
+                    textAlign: "center",
+                    color: MUTED,
+                  }}
+                >
+                  No active sessions found.
+                </td>
               </tr>
-            </thead>
+            ) : (
+              filteredSessions.map((session) => (
+                <tr key={session.id} style={{ borderBottom: "1px solid #222" }}>
+                  <td style={tdStyle}>#{session.id}</td>
 
-            <tbody>
-              {filteredSessions.length === 0 ? (
-                <tr>
-                  <td colSpan="7" style={{ padding: "24px", textAlign: "center", color: MUTED }}>
-                    No active sessions found.
+                  <td style={tdStyle}>
+                    <div style={{ color: "#fff", fontWeight: 700 }}>
+                      {session.user?.fullName || "N/A"}
+                    </div>
+                    <div style={{ color: MUTED, fontSize: "12px" }}>
+                      {session.user?.email || ""}
+                    </div>
                   </td>
-                </tr>
-              ) : (
-                filteredSessions.map((session) => (
-                  <tr key={session.id} style={{ borderBottom: "1px solid #222" }}>
-                    <td style={tdStyle}>#{session.id}</td>
 
-                    <td style={tdStyle}>
-                      <div style={{ color: "#fff", fontWeight: 700 }}>
-                        {session.user?.fullName || "N/A"}
-                      </div>
-                      <div style={{ color: MUTED, fontSize: "12px" }}>
-                        {session.user?.email || ""}
-                      </div>
-                    </td>
+                  <td style={tdStyle}>
+                    {session.station?.stationNo ||
+                      `Station ${session.station?.id || "N/A"}`}
+                  </td>
 
-                    <td style={tdStyle}>
-                      {session.station?.stationNo ||
-                        `Station ${session.station?.id || "N/A"}`}
-                    </td>
+                  <td style={tdStyle}>
+                    {session.startTime
+                      ? new Date(session.startTime).toLocaleString()
+                      : "N/A"}
+                  </td>
 
-                    <td style={tdStyle}>
-                      {session.startTime
-                        ? new Date(session.startTime).toLocaleString()
-                        : "N/A"}
-                    </td>
+                  <td style={tdStyle}>
+                    {session.endTime
+                      ? new Date(session.endTime).toLocaleString()
+                      : "N/A"}
+                  </td>
 
-                    <td style={tdStyle}>
-                      {session.endTime
-                        ? new Date(session.endTime).toLocaleString()
-                        : "N/A"}
-                    </td>
+                  <td style={tdStyle}>
+                    <span style={pillStyle}>{session.status}</span>
+                  </td>
 
-                    <td style={tdStyle}>
-                      <span style={pillStyle}>{session.status}</span>
-                    </td>
-
-                    <td style={tdStyle}>
+                  <td style={tdStyle}>
                     <div style={{ display: "flex", gap: "8px" }}>
-                        <button
+                      <button
                         disabled={savingId === session.id}
                         onClick={() => handleExtend(session.id)}
                         style={primaryButtonStyle}
-                        >
+                      >
                         {savingId === session.id ? "Extending..." : "Extend"}
-                        </button>
+                      </button>
 
-                        <button
+                      <button
                         disabled={savingId === session.id}
                         onClick={() => handleEndSession(session.id)}
                         style={{
-                            ...primaryButtonStyle,
-                            background: "#ef4444",
-                            color: "#fff",
+                          ...primaryButtonStyle,
+                          background: "#ef4444",
+                          color: "#fff",
                         }}
-                        >
+                      >
                         End
-                        </button>
+                      </button>
                     </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </AdminLayout>
-  );
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </AdminLayout>
+);
 }
 
 const inputStyle = {
