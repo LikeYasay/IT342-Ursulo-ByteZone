@@ -21,7 +21,13 @@ public class PaymentService {
 
     @Transactional(readOnly = true)
     public List<Payment> getPending() {
-        return paymentRepository.findByStatusOrderByCreatedAtDesc(PaymentStatus.PENDING);
+        return paymentRepository.findByStatusInOrderByCreatedAtDesc(
+                List.of(
+                        PaymentStatus.INITIATED,
+                        PaymentStatus.PROCESSING,
+                        PaymentStatus.PENDING
+                )
+        );
     }
 
     @Transactional(readOnly = true)
