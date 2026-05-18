@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { logoutUser } from "../../auth/authService";
+import NotificationBell from "../../notifications/NotificationBell.jsx";
 
 const CYAN = "#39d5ff";
 const DARK_BG = "#000000";
@@ -149,21 +150,7 @@ export default function AdminLayout({ title, children }) {
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            <div style={{ position: "relative", cursor: "pointer" }}>
-              <span style={{ fontSize: "20px" }}>🔔</span>
-              <div
-                style={{
-                  position: "absolute",
-                  top: "-2px",
-                  right: "-2px",
-                  width: "8px",
-                  height: "8px",
-                  borderRadius: "50%",
-                  background: CYAN,
-                  animation: "pulse 2s infinite",
-                }}
-              />
-            </div>
+            <NotificationBell />
 
             <span style={{ fontSize: "14px", color: "#fff", fontWeight: 500 }}>
               Welcome,{" "}
