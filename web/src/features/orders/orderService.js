@@ -26,3 +26,18 @@ export const updateOrderStatus = async (orderId, status) => {
   });
   return response.data;
 };
+
+export const createSnack = async (payload) => {
+  const response = await api.post("/api/admin/snacks", payload);
+  return response.data;
+};
+
+export const updateSnack = async (snackId, payload) => {
+  const response = await api.put(`/api/admin/snacks/${snackId}`, payload);
+  return response.data;
+};
+
+export const deleteSnack = async (snackId) => {
+  const response = await api.delete(`/api/admin/snacks/${snackId}`);
+  return response.data;
+};
