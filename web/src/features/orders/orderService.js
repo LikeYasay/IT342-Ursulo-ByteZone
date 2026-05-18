@@ -14,3 +14,15 @@ export const getMyOrders = async () => {
   const response = await api.get("/api/orders/me");
   return response.data;
 };
+
+export const getAllOrders = async () => {
+  const response = await api.get("/api/orders");
+  return response.data;
+};
+
+export const updateOrderStatus = async (orderId, status) => {
+  const response = await api.put(`/api/orders/${orderId}/status`, {
+    status,
+  });
+  return response.data;
+};
