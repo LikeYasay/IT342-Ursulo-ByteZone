@@ -1,5 +1,10 @@
 import api from "../../shared/services/api";
 
+export const getActiveSessions = async () => {
+  const response = await api.get("/api/sessions/active");
+  return response.data;
+};
+
 export const startSession = async (payload) => {
   const response = await api.post("/api/sessions", payload);
   return response.data;
