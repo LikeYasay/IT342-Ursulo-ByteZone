@@ -7,6 +7,11 @@ import edu.cit.ursulo.bytezone.users.User;
 import edu.cit.ursulo.bytezone.users.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import edu.cit.ursulo.bytezone.payments.Payment;
+import edu.cit.ursulo.bytezone.payments.PaymentMethod;
+import edu.cit.ursulo.bytezone.payments.PaymentRepository;
+import edu.cit.ursulo.bytezone.payments.PaymentStatus;
+import edu.cit.ursulo.bytezone.payments.PaymentType;
 
 import java.time.LocalDateTime;
 
@@ -16,13 +21,16 @@ public class SessionService {
     private final CafeSessionRepository cafeSessionRepository;
     private final StationRepository stationRepository;
     private final UserRepository userRepository;
+    private final PaymentRepository paymentRepository;
 
-    public SessionService(CafeSessionRepository cafeSessionRepository,
-                          StationRepository stationRepository,
-                          UserRepository userRepository) {
+        public SessionService(CafeSessionRepository cafeSessionRepository,
+                        StationRepository stationRepository,
+                        UserRepository userRepository,
+                        PaymentRepository paymentRepository) {
         this.cafeSessionRepository = cafeSessionRepository;
         this.stationRepository = stationRepository;
         this.userRepository = userRepository;
+        this.paymentRepository = paymentRepository;
     }
 
     @Transactional
@@ -68,5 +76,28 @@ public class SessionService {
         stationRepository.save(station);
 
         return session;
+    }
+        @Transactional
+    public CafeSession extend(Long sessionId, ExtendSessionRequest request) {
+        CafeSession session = cafeSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new RuntimeException("Session not found"));
+
+        if (session.getStatus() != SessionStatus.ACTIVE) {
+            throw new RuntimeException("Only active sessions can be extended");
+        }
+
+        session.setEndTime(session.getEndTime().plusMinutes(request.getMinutes()));
+        CafeSession saved = cafeSessionRepository.save(session);
+
+        Payment payment = new Payment();
+        payment.setUser(saved.getUser());
+        payment.setType(PaymentType.SESSION_EXTENSION);
+        payment.setReferenceId(saved.getId());
+        payment.setAmount(request.getAmount());
+        payment.setStatus(PaymentStatus.INITIATED);
+        payment.setMethod(PaymentMethod.SANDBOX);
+        paymentRepository.save(payment);
+
+        return saved;
     }
 }

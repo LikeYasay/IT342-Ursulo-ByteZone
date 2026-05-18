@@ -33,4 +33,15 @@ public class SessionController {
                 ApiResponse.success(sessionService.end(sessionId), "Session ended successfully")
         );
     }
+
+        @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
+    @PutMapping("/{sessionId}/extend")
+    public ResponseEntity<ApiResponse<CafeSession>> extend(
+            @PathVariable Long sessionId,
+            @Valid @RequestBody ExtendSessionRequest request
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.success(sessionService.extend(sessionId, request), "Session extended successfully")
+        );
+    }
 }
