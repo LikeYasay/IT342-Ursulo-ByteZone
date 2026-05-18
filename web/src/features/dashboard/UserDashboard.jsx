@@ -4,6 +4,8 @@ import { getCurrentUser, logoutUser } from "../auth/authService";
 import { getMyReservations } from "../booking/bookingService";
 import { getMyOrders } from "../orders/orderService";
 import { getMyPayments } from "../payments/paymentService";
+import NotificationBell from "../notifications/NotificationBell.jsx";
+
 
 const CYAN = "#39d5ff";
 const DARK_BG = "#000000";
@@ -231,10 +233,7 @@ export default function UserDashboard() {
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
             <span style={{ fontSize: "14px", color: "#fff", fontWeight: 500 }}>Welcome, <span style={{ color: CYAN, fontWeight: 700 }}>{displayName}</span></span>
-            <div style={{ position: "relative", cursor: "pointer" }}>
-              <span style={{ fontSize: "20px" }}>🔔</span>
-              <div style={{ position: "absolute", top: "-2px", right: "-2px", width: "8px", height: "8px", borderRadius: "50%", background: CYAN, animation: "pulse 2s infinite" }} />
-            </div>
+            <NotificationBell />
             <div style={{ width: "38px", height: "38px", borderRadius: "50%", background: `linear-gradient(135deg, ${CYAN}, #0070a8)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: 800, color: "#000", border: `2px solid ${CYAN}` }}>{displayInitial}</div>
             <button onClick={handleLogout} style={{ padding: "8px 20px", background: MUTED, color: "#fff", fontWeight: 600, fontSize: "14px", borderRadius: "8px", border: "none", cursor: "pointer", fontFamily: "'Montserrat', sans-serif", transition: "background 0.2s" }} onMouseEnter={(e) => { e.currentTarget.style.background = "#666"; }} onMouseLeave={(e) => { e.currentTarget.style.background = MUTED; }}>Logout</button>
           </div>
