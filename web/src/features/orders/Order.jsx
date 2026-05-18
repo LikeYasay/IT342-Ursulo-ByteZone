@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getSnacks, createOrder, getMyOrders } from "./orderService";
 import { getStations } from "../booking/bookingService";
+import { getMyPayments } from "../payments/paymentService";
 import { logoutUser } from "../auth/authService";
 
 const CYAN = "#39d5ff";
@@ -407,19 +408,34 @@ export default function Order() {
     try {
       setError("");
 
-      await createOrder({
-        stationId: Number(stationId),
-        items: cartItems.map((item) => ({
-          snackId: item.id,
-          qty: cart[item.id],
-        })),
-        paymentMethod: "CASH",
-      });
+        const orderResponse = await createOrder({
+          stationId: Number(stationId),
+          items: cartItems.map((item) => ({
+            snackId: item.id,
+            qty: cart[item.id],
+          })),
+          paymentMethod: "SANDBOX",
+        });
 
-      setConfirmed(true);
-      setTimeout(() => setConfirmed(false), 3000);
-      setCart({});
-      await loadData();
+        const createdOrder = orderResponse.data;
+
+        const paymentsResponse = await getMyPayments();
+        const payments = paymentsResponse.data || [];
+
+        const matchingPayment = payments.find(
+          (payment) =>
+            payment.type === "SNACK_ORDER" &&
+            Number(payment.referenceId) === Number(createdOrder.id)
+        );
+
+        setConfirmed(true);
+        setCart({});
+
+        if (matchingPayment) {
+          navigate(`/payments/sandbox/${matchingPayment.id}`);
+        } else {
+          await loadData();
+        }
     } catch (err) {
       setError(err.response?.data?.message || "Failed to place order.");
     }
