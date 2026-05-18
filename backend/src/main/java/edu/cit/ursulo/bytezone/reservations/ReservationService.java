@@ -6,6 +6,8 @@ import edu.cit.ursulo.bytezone.stations.StationRepository;
 import edu.cit.ursulo.bytezone.users.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import edu.cit.ursulo.bytezone.notifications.NotificationService;
+import edu.cit.ursulo.bytezone.notifications.NotificationType;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -16,14 +18,17 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final StationRepository stationRepository;
     private final CurrentUserService currentUserService;
+    private final NotificationService notificationService;
 
     public ReservationService(ReservationRepository reservationRepository,
-                              StationRepository stationRepository,
-                              CurrentUserService currentUserService) {
-        this.reservationRepository = reservationRepository;
-        this.stationRepository = stationRepository;
-        this.currentUserService = currentUserService;
-    }
+                          StationRepository stationRepository,
+                          CurrentUserService currentUserService,
+                          NotificationService notificationService) {
+                this.reservationRepository = reservationRepository;
+                this.stationRepository = stationRepository;
+                this.currentUserService = currentUserService;
+                this.notificationService = notificationService;
+            }
 
     @Transactional
     public Reservation create(CreateReservationRequest request) {
@@ -83,6 +88,15 @@ public class ReservationService {
                 .orElseThrow(() -> new RuntimeException("Reservation not found"));
 
         reservation.setStatus(request.getStatus());
-        return reservationRepository.save(reservation);
+        Reservation saved = reservationRepository.save(reservation);
+
+        notificationService.create(
+                saved.getUser(),
+                "Reservation Status Updated",
+                "Your reservation #" + saved.getId() + " is now " + saved.getStatus() + ".",
+                NotificationType.RESERVATION_UPDATE
+        );
+
+        return saved;
     }
 }
