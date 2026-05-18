@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import AdminLayout from "./components/AdminLayout.jsx";
-import { extendSession, getActiveSessions } from "../sessions/sessionService";
+import {
+  endSession,
+  extendSession,
+  getActiveSessions,
+} from "../sessions/sessionService";
 
 const CYAN = "#39d5ff";
 const MUTED = "#8a8f98";
@@ -53,6 +57,7 @@ export default function AdminExtendingTime() {
   }, [sessions, search]);
 
   const handleExtend = async (sessionId) => {
+
     try {
       setSavingId(sessionId);
       setError("");
@@ -70,6 +75,25 @@ export default function AdminExtendingTime() {
       setSavingId(null);
     }
   };
+
+    const handleEndSession = async (sessionId) => {
+    const confirmed = window.confirm("Are you sure you want to end this session?");
+
+    if (!confirmed) return;
+
+    try {
+        setSavingId(sessionId);
+        setError("");
+
+        await endSession(sessionId);
+        await loadSessions();
+        alert("Session ended successfully.");
+    } catch (err) {
+        setError(err.response?.data?.message || "Failed to end session.");
+    } finally {
+        setSavingId(null);
+    }
+    };
 
   return (
     <AdminLayout title="Extending Time">
@@ -184,13 +208,27 @@ export default function AdminExtendingTime() {
                     </td>
 
                     <td style={tdStyle}>
-                      <button
+                    <div style={{ display: "flex", gap: "8px" }}>
+                        <button
                         disabled={savingId === session.id}
                         onClick={() => handleExtend(session.id)}
                         style={primaryButtonStyle}
-                      >
+                        >
                         {savingId === session.id ? "Extending..." : "Extend"}
-                      </button>
+                        </button>
+
+                        <button
+                        disabled={savingId === session.id}
+                        onClick={() => handleEndSession(session.id)}
+                        style={{
+                            ...primaryButtonStyle,
+                            background: "#ef4444",
+                            color: "#fff",
+                        }}
+                        >
+                        End
+                        </button>
+                    </div>
                     </td>
                   </tr>
                 ))
