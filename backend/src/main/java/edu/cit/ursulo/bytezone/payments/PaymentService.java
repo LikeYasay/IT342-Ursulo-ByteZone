@@ -3,6 +3,8 @@ package edu.cit.ursulo.bytezone.payments;
 import edu.cit.ursulo.bytezone.auth.CurrentUserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import edu.cit.ursulo.bytezone.notifications.NotificationService;
+import edu.cit.ursulo.bytezone.notifications.NotificationType;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,11 +14,14 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final CurrentUserService currentUserService;
+    private final NotificationService notificationService;
 
     public PaymentService(PaymentRepository paymentRepository,
-                          CurrentUserService currentUserService) {
-        this.paymentRepository = paymentRepository;
-        this.currentUserService = currentUserService;
+                      CurrentUserService currentUserService,
+                      NotificationService notificationService) {
+    this.paymentRepository = paymentRepository;
+    this.currentUserService = currentUserService;
+    this.notificationService = notificationService;
     }
 
     @Transactional(readOnly = true)
@@ -51,7 +56,16 @@ public class PaymentService {
         payment.setMethod(request.getMethod());
         payment.setPaidAt(LocalDateTime.now());
 
-        return paymentRepository.save(payment);
+        Payment saved = paymentRepository.save(payment);
+
+        notificationService.create(
+                saved.getUser(),
+                "Payment Confirmed",
+                "Your payment #" + saved.getId() + " has been confirmed.",
+                NotificationType.PAYMENT_UPDATE
+        );
+
+        return saved;
     }
 
     @Transactional
@@ -105,6 +119,15 @@ public class PaymentService {
             payment.setPaidAt(LocalDateTime.now());
         }
 
-        return paymentRepository.save(payment);
+        Payment saved = paymentRepository.save(payment);
+
+        notificationService.create(
+                saved.getUser(),
+                "Sandbox Payment Updated",
+                "Your sandbox payment #" + saved.getId() + " is now " + saved.getStatus() + ".",
+                NotificationType.PAYMENT_UPDATE
+        );
+
+        return saved;
     }
 }

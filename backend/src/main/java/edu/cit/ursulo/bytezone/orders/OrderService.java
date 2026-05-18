@@ -13,6 +13,9 @@ import edu.cit.ursulo.bytezone.users.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import edu.cit.ursulo.bytezone.payments.PaymentMethod;
+import edu.cit.ursulo.bytezone.notifications.NotificationService;
+import edu.cit.ursulo.bytezone.notifications.NotificationType;
+
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -26,17 +29,20 @@ public class OrderService {
     private final StationRepository stationRepository;
     private final PaymentRepository paymentRepository;
     private final CurrentUserService currentUserService;
+    private final NotificationService notificationService;
 
-    public OrderService(SnackOrderRepository snackOrderRepository,
-                        SnackRepository snackRepository,
-                        StationRepository stationRepository,
-                        PaymentRepository paymentRepository,
-                        CurrentUserService currentUserService) {
+public OrderService(SnackOrderRepository snackOrderRepository,
+                    SnackRepository snackRepository,
+                    StationRepository stationRepository,
+                    PaymentRepository paymentRepository,
+                    CurrentUserService currentUserService,
+                    NotificationService notificationService) {
         this.snackOrderRepository = snackOrderRepository;
         this.snackRepository = snackRepository;
         this.stationRepository = stationRepository;
         this.paymentRepository = paymentRepository;
         this.currentUserService = currentUserService;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -107,6 +113,15 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
         order.setStatus(request.getStatus());
-        return snackOrderRepository.save(order);
+        SnackOrder saved = snackOrderRepository.save(order);
+
+        notificationService.create(
+                saved.getUser(),
+                "Order Status Updated",
+                "Your order #" + saved.getId() + " is now " + saved.getStatus() + ".",
+                NotificationType.ORDER_UPDATE
+        );
+
+        return saved;
     }
 }
