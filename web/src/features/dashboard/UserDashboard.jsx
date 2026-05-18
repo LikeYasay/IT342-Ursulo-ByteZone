@@ -6,6 +6,7 @@ import { getMyOrders } from "../orders/orderService";
 import { getMyPayments } from "../payments/paymentService";
 import NotificationBell from "../notifications/NotificationBell.jsx";
 import { getAnnouncements } from "../announcements/announcementService";
+import { getMyActiveSession } from "../sessions/sessionService";
 
 const CYAN = "#39d5ff";
 const DARK_BG = "#000000";
@@ -196,7 +197,8 @@ export default function UserDashboard() {
   const [orders, setOrders] = useState([]);
   const [payments, setPayments] = useState([]);
   const [error, setError] = useState("");
-  const [remainingTime] = useState("00:15:00");
+  const [activeSession, setActiveSession] = useState(null);
+  const [remainingTime, setRemainingTime] = useState("00:00:00");
   const [reservationTime, setReservationTime] = useState("00:00:00");
 
   const visibleGames = 4;
@@ -225,6 +227,16 @@ export default function UserDashboard() {
     return () => clearInterval(timer);
   }, [reservations]);
 
+  useEffect(() => {
+  const timer = setInterval(() => {
+    setRemainingTime(
+      activeSession?.endTime ? formatCountdown(activeSession.endTime) : "00:00:00"
+    );
+  }, 1000);
+
+  return () => clearInterval(timer);
+}, [activeSession]);
+
   async function loadDashboard() {
     try {
       setError("");
@@ -235,12 +247,14 @@ export default function UserDashboard() {
         orderRes,
         paymentRes,
         announcementsRes,
+        activeSessionRes,
       ] = await Promise.all([
         getCurrentUser(),
         getMyReservations(),
         getMyOrders(),
         getMyPayments(),
         getAnnouncements(),
+        getMyActiveSession(),
       ]);
 
       setUser(userRes.data);
@@ -248,6 +262,7 @@ export default function UserDashboard() {
       setOrders(orderRes.data || []);
       setPayments(paymentRes.data || []);
       setAnnouncements(announcementsRes.data || []);
+      setActiveSession(activeSessionRes.data || null);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to load dashboard.");
     }
@@ -328,26 +343,27 @@ export default function UserDashboard() {
       })
     : "N/A";
 
-  const currentStation =
-    latestReservation?.station?.stationNo ||
-    latestOrder?.station?.stationNo ||
-    "N/A";
+const currentStation =
+  activeSession?.station?.stationNo ||
+  latestReservation?.station?.stationNo ||
+  latestOrder?.station?.stationNo ||
+  "N/A";
 
-  const reservedStation = latestReservation?.station?.stationNo || "N/A";
+const reservedStation = latestReservation?.station?.stationNo || "N/A";
 
-  const reservationDate = latestReservation?.date
-    ? new Date(latestReservation.date).toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      })
-    : "N/A";
+const reservationDate = latestReservation?.date
+  ? new Date(latestReservation.date).toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    })
+  : "N/A";
 
-  const reservationTimeRange = latestReservation?.startTime
-    ? `${latestReservation.startTime} – ${latestReservation.endTime || ""}`
-    : "N/A";
+const reservationTimeRange = latestReservation?.startTime
+  ? `${latestReservation.startTime} – ${latestReservation.endTime || ""}`
+  : "N/A";
 
-  const sessionStatus = latestReservation?.status || "Inactive";
+const sessionStatus = activeSession?.status || "Inactive";
 
   return (
     <>
