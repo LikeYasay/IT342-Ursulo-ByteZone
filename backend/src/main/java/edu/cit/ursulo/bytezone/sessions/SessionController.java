@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/sessions")
 public class SessionController {
@@ -15,6 +17,14 @@ public class SessionController {
 
     public SessionController(SessionService sessionService) {
         this.sessionService = sessionService;
+    }
+
+    @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
+    @GetMapping("/active")
+    public ResponseEntity<ApiResponse<List<CafeSession>>> getActiveSessions() {
+        return ResponseEntity.ok(
+                ApiResponse.success(sessionService.getActiveSessions(), "Active sessions fetched successfully")
+        );
     }
 
     @PreAuthorize("hasAnyRole('STAFF','ADMIN')")

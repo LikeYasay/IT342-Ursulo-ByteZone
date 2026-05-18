@@ -13,6 +13,7 @@ import edu.cit.ursulo.bytezone.payments.PaymentRepository;
 import edu.cit.ursulo.bytezone.payments.PaymentStatus;
 import edu.cit.ursulo.bytezone.payments.PaymentType;
 
+import java.util.List;
 import java.time.LocalDateTime;
 
 @Service
@@ -31,6 +32,11 @@ public class SessionService {
         this.stationRepository = stationRepository;
         this.userRepository = userRepository;
         this.paymentRepository = paymentRepository;
+    }
+    
+    @Transactional(readOnly = true)
+    public List<CafeSession> getActiveSessions() {
+        return cafeSessionRepository.findByStatusOrderByCreatedAtDesc(SessionStatus.ACTIVE);
     }
 
     @Transactional
