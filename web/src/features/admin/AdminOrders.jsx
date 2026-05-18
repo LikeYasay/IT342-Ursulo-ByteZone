@@ -1,9 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import AdminLayout from "./components/AdminLayout.jsx";
-import { getAllOrders } from "../orders/orderService";
+import { getAllOrders, updateOrderStatus } from "../orders/orderService";
 
 const CYAN = "#39d5ff";
 const MUTED = "#8a8f98";
+
+const ORDER_STATUS_OPTIONS = [
+  "PENDING",
+  "PREPARING",
+  "READY",
+  "SERVED",
+  "CANCELLED",
+];
+
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
@@ -28,6 +37,17 @@ export default function AdminOrders() {
       setLoading(false);
     }
   };
+
+    const handleStatusChange = async (orderId, status) => {
+    try {
+        setError("");
+
+        await updateOrderStatus(orderId, status);
+        await loadOrders();
+    } catch (err) {
+        setError(err.response?.data?.message || "Failed to update order status.");
+    }
+    };
 
   const filteredOrders = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -188,19 +208,29 @@ export default function AdminOrders() {
                     <td style={tdStyle}>₱{Number(order.total || 0).toFixed(2)}</td>
 
                     <td style={tdStyle}>
-                      <span
-                        style={{
-                          padding: "4px 10px",
-                          borderRadius: "999px",
-                          background: "rgba(57,213,255,0.12)",
-                          color: CYAN,
-                          fontWeight: 800,
-                          fontSize: "12px",
-                        }}
-                      >
-                        {order.status}
-                      </span>
-                    </td>
+                        <select
+                            value={order.status}
+                            onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                            style={{
+                            padding: "7px 10px",
+                            borderRadius: "999px",
+                            border: `1px solid ${CYAN}`,
+                            background: "rgba(57,213,255,0.12)",
+                            color: CYAN,
+                            fontWeight: 800,
+                            fontSize: "12px",
+                            outline: "none",
+                            cursor: "pointer",
+                            fontFamily: "'Montserrat', sans-serif",
+                            }}
+                        >
+                            {ORDER_STATUS_OPTIONS.map((status) => (
+                            <option key={status} value={status}>
+                                {status}
+                            </option>
+                            ))}
+                        </select>
+                        </td>
 
                     <td style={tdStyle}>
                       {order.createdAt
