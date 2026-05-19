@@ -13,6 +13,10 @@ const CARD_BG = "#1c1c1c";
 const INNER_BG = "#111111";
 const MUTED = "#8a8f98";
 
+function getUserImageUrl(user) {
+  return user?.profileImageUrl || user?.profile_image_url || "";
+}
+
 export default function UserProfile() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
@@ -25,6 +29,7 @@ export default function UserProfile() {
     password: "",
   });
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -36,11 +41,16 @@ export default function UserProfile() {
     try {
       setLoading(true);
       setError("");
+      setMessage("");
 
       const response = await getCurrentUser();
       const currentUser = response.data;
 
+      const savedImageUrl = getUserImageUrl(currentUser);
+
       setUser(currentUser);
+      setProfilePreview(savedImageUrl);
+
       setForm({
         fullName: currentUser?.fullName || "",
         email: currentUser?.email || "",
@@ -66,7 +76,9 @@ export default function UserProfile() {
   };
 
   const handleImageClick = () => {
-    fileInputRef.current?.click();
+    if (!uploading) {
+      fileInputRef.current?.click();
+    }
   };
 
   const handleImageChange = async (event) => {
@@ -74,32 +86,46 @@ export default function UserProfile() {
 
     if (!file) return;
 
-    setProfilePreview(URL.createObjectURL(file));
+    const localPreviewUrl = URL.createObjectURL(file);
+
+    setProfilePreview(localPreviewUrl);
     setMessage("");
     setError("");
 
     try {
+      setUploading(true);
+
       const response = await uploadMyProfileImage(file);
       const updatedUser = response.data;
+      const savedImageUrl = getUserImageUrl(updatedUser);
 
       setUser(updatedUser);
-      setProfilePreview(updatedUser.profileImageUrl || "");
+      setProfilePreview(savedImageUrl || localPreviewUrl);
+
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
       setMessage("Profile picture updated successfully.");
+
+      await loadProfile();
     } catch (err) {
       setError(
-        err.response?.data?.message || "Failed to upload profile image.",
+        err.response?.data?.message || "Failed to upload profile image."
       );
+    } finally {
+      setUploading(false);
+      event.target.value = "";
     }
   };
 
   const handleUpdate = () => {
     setMessage(
-      "Profile update UI is ready. Backend update/save will be connected next.",
+      "Profile update UI is ready. Backend update/save will be connected next."
     );
   };
 
   const displayName = user?.fullName || "Player";
   const displayInitial = displayName.charAt(0).toUpperCase();
+  const imageUrl = profilePreview || getUserImageUrl(user);
 
   return (
     <>
@@ -201,7 +227,9 @@ export default function UserProfile() {
                 width: "38px",
                 height: "38px",
                 borderRadius: "50%",
-                background: `linear-gradient(135deg, ${CYAN}, #0070a8)`,
+                background: imageUrl
+                  ? "#111"
+                  : `linear-gradient(135deg, ${CYAN}, #0070a8)`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -211,9 +239,22 @@ export default function UserProfile() {
                 border: `2px solid ${CYAN}`,
                 cursor: "pointer",
                 fontFamily: "'Montserrat', sans-serif",
+                overflow: "hidden",
               }}
             >
-              {displayInitial}
+              {imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt="Profile"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                />
+              ) : (
+                displayInitial
+              )}
             </button>
 
             <button
@@ -323,6 +364,7 @@ export default function UserProfile() {
               <div style={{ textAlign: "center", marginBottom: "24px" }}>
                 <button
                   onClick={handleImageClick}
+                  disabled={uploading}
                   style={{
                     width: "120px",
                     height: "120px",
@@ -330,7 +372,7 @@ export default function UserProfile() {
                     border: `2px solid ${CYAN}`,
                     background: INNER_BG,
                     overflow: "hidden",
-                    cursor: "pointer",
+                    cursor: uploading ? "not-allowed" : "pointer",
                     display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -339,11 +381,12 @@ export default function UserProfile() {
                     fontSize: "12px",
                     fontFamily: "'Montserrat', sans-serif",
                     boxShadow: "0 0 20px rgba(57,213,255,0.12)",
+                    opacity: uploading ? 0.7 : 1,
                   }}
                 >
-                  {profilePreview || user?.profileImageUrl ? (
+                  {imageUrl ? (
                     <img
-                      src={profilePreview || user?.profileImageUrl}
+                      src={imageUrl}
                       alt="Profile preview"
                       style={{
                         width: "100%",
@@ -371,7 +414,9 @@ export default function UserProfile() {
                     marginTop: "12px",
                   }}
                 >
-                  Click the icon to upload a new profile picture
+                  {uploading
+                    ? "Uploading profile picture..."
+                    : "Click the icon to upload a new profile picture"}
                 </p>
               </div>
 

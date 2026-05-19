@@ -7,16 +7,18 @@ public class MeResponse {
     private String email;
     private String role;
     private Integer tournamentWins;
+    private String profileImageUrl;
 
     public MeResponse() {
     }
 
-    public MeResponse(Long id, String fullName, String email, String role, Integer tournamentWins) {
+    public MeResponse(Long id, String fullName, String email, String role, Integer tournamentWins, String profileImageUrl) {
         this.id = id;
         this.fullName = fullName;
         this.email = email;
         this.role = role;
         this.tournamentWins = tournamentWins;
+        this.profileImageUrl = profileImageUrl;
     }
 
     public Long getId() {
@@ -39,6 +41,10 @@ public class MeResponse {
         return tournamentWins;
     }
 
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -57,5 +63,9 @@ public class MeResponse {
 
     public void setTournamentWins(Integer tournamentWins) {
         this.tournamentWins = tournamentWins;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 }

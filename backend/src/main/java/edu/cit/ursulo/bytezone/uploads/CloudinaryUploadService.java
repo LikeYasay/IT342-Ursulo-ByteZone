@@ -39,7 +39,7 @@ public class CloudinaryUploadService {
         } catch (IOException e) {
             throw new RuntimeException("Failed to read image file");
         } catch (Exception e) {
-            throw new RuntimeException("Failed to upload image to Cloudinary");
+            throw new RuntimeException("Failed to upload image to Cloudinary: " + e.getMessage());
         }
     }
 

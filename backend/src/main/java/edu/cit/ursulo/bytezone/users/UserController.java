@@ -21,12 +21,13 @@ public class UserController {
         User user = currentUserService.getCurrentUser();
 
         MeResponse response = new MeResponse(
-                user.getId(),
-                user.getFullName(),
-                user.getEmail(),
-                user.getRole().name(),
-                user.getTournamentWins()
-        );
+        user.getId(),
+        user.getFullName(),
+        user.getEmail(),
+        user.getRole().name(),
+        user.getTournamentWins(),
+        user.getProfileImageUrl()
+    );
 
         return ResponseEntity.ok(ApiResponse.success(response, "Current user fetched successfully"));
     }
