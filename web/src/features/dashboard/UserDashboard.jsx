@@ -274,6 +274,7 @@ export default function UserDashboard() {
     if (label === "Home") navigate("/dashboard");
     if (label === "Book") navigate("/booking");
     if (label === "Order") navigate("/order");
+    if (label === "Transactions") navigate("/transactions");
   };
 
   const handleLogout = () => {
@@ -442,7 +443,7 @@ const sessionStatus = activeSession?.status || "Inactive";
           </div>
 
           <div style={{ display: "flex", gap: "6px" }}>
-            {["Home", "Book", "Order"].map((link) => (
+            {["Home", "Book", "Order", "Transactions"].map((link) => (
               <button
                 key={link}
                 onClick={() => handleNav(link)}
@@ -1093,7 +1094,7 @@ const sessionStatus = activeSession?.status || "Inactive";
           </span>
 
           <div style={{ display: "flex", gap: "24px" }}>
-            {["Home", "Book", "Order"].map((link) => (
+            {["Home", "Book", "Order", "Transactions"].map((link) => (
               <span
                 key={link}
                 style={{
