@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import AdminLayout from "./components/AdminLayout.jsx";
-import { getPendingPayments } from "../payments/paymentService";
+import { confirmPayment, getPendingPayments } from "../payments/paymentService";
 
 const CYAN = "#39d5ff";
 const MUTED = "#8a8f98";
@@ -9,6 +9,7 @@ export default function AdminPendingPayments() {
   const [payments, setPayments] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [savingId, setSavingId] = useState(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -30,6 +31,28 @@ export default function AdminPendingPayments() {
       setLoading(false);
     }
   };
+
+  const handleConfirmPayment = async (paymentId) => {
+  const confirmed = window.confirm("Confirm this payment as PAID?");
+
+  if (!confirmed) return;
+
+  try {
+    setSavingId(paymentId);
+    setError("");
+
+    await confirmPayment(paymentId, {
+      method: "SANDBOX",
+      referenceNo: `BZ-ADMIN-CONFIRM-${paymentId}`,
+    });
+
+    await loadPayments();
+  } catch (err) {
+    setError(err.response?.data?.message || "Failed to confirm payment.");
+  } finally {
+    setSavingId(null);
+  }
+};
 
   const filteredPayments = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -102,7 +125,7 @@ export default function AdminPendingPayments() {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
             <thead>
               <tr style={{ background: "#111" }}>
-                {["ID", "User", "Type", "Amount", "Status", "Method", "Reference"].map((header) => (
+                {["ID", "User", "Type", "Amount", "Status", "Method", "Reference", "Actions"].map((header) => (
                   <th
                     key={header}
                     style={{
@@ -122,7 +145,7 @@ export default function AdminPendingPayments() {
             <tbody>
               {filteredPayments.length === 0 ? (
                 <tr>
-                  <td colSpan="7" style={{ padding: "24px", textAlign: "center", color: MUTED }}>
+                  <td colSpan="8" style={{ padding: "24px", textAlign: "center", color: MUTED }}>
                     No pending payments found.
                   </td>
                 </tr>
@@ -156,6 +179,25 @@ export default function AdminPendingPayments() {
                     </td>
                     <td style={tdStyle}>{payment.method || "N/A"}</td>
                     <td style={tdStyle}>{payment.referenceNo || "N/A"}</td>
+                    <td style={tdStyle}>
+                    <button
+                      disabled={savingId === payment.id}
+                      onClick={() => handleConfirmPayment(payment.id)}
+                      style={{
+                        padding: "7px 12px",
+                        borderRadius: "8px",
+                        border: "none",
+                        background: CYAN,
+                        color: "#000",
+                        fontWeight: 800,
+                        cursor: "pointer",
+                        fontFamily: "'Montserrat', sans-serif",
+                        fontSize: "12px",
+                      }}
+                    >
+                      {savingId === payment.id ? "Confirming..." : "Confirm Paid"}
+                    </button>
+                  </td>
                   </tr>
                 ))
               )}

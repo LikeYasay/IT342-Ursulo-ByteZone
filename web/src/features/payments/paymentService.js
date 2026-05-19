@@ -27,3 +27,8 @@ export const submitSandboxPaymentResult = async (paymentId, payload) => {
   );
   return response.data;
 };
+
+export const confirmPayment = async (paymentId, payload) => {
+  const response = await api.put(`/api/payments/${paymentId}/confirm`, payload);
+  return response.data;
+};
