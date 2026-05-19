@@ -26,3 +26,10 @@ export const updateReservationStatus = async (reservationId, status) => {
   });
   return response.data;
 };
+
+export const updateStationStatus = async (stationId, status) => {
+  const response = await api.put(`/api/admin/stations/${stationId}/status`, {
+    status,
+  });
+  return response.data;
+};

@@ -17,6 +17,7 @@ import AdminPendingPayments from "./features/admin/AdminPendingPayments.jsx";
 import SandboxCheckout from "./features/payments/SandboxCheckout.jsx";
 import AdminReservations from "./features/admin/AdminReservations.jsx";
 import UserTransactionHistory from "./features/payments/UserTransactionHistory.jsx";
+import AdminStations from "./features/admin/AdminStations.jsx";
 
 function App() {
   return (
@@ -132,6 +133,14 @@ function App() {
         </RoleProtectedRoute>
       }
       />
+      <Route
+      path="/admin/stations"
+      element={
+        <RoleProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+          <AdminStations />
+        </RoleProtectedRoute>
+      }
+    />
 
       <Route
         path="/payments/sandbox/:paymentId"
