@@ -111,7 +111,7 @@ export default function Booking() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const navLinks = ["Home", "Book", "Order"];
+  const navLinks = ["Home", "Book", "Order", "Transactions"];
 
   useEffect(() => {
     loadBookingData();
@@ -219,6 +219,7 @@ export default function Booking() {
     if (label === "Home") navigate("/dashboard");
     if (label === "Book") navigate("/booking");
     if (label === "Order") navigate("/order");
+    if (label === "Transactions") navigate("/transactions");
   };
 
   const handleLogout = () => {

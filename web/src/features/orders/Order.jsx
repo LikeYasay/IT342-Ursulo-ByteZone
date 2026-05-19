@@ -385,8 +385,7 @@ export default function Order() {
 
   const cartItems = allItems.filter((i) => cart[i.id] > 0);
   const total = useMemo(
-    () =>
-      cartItems.reduce((sum, i) => sum + Number(i.price) * cart[i.id], 0),
+    () => cartItems.reduce((sum, i) => sum + Number(i.price) * cart[i.id], 0),
     [cartItems, cart],
   );
   const totalQty = useMemo(
@@ -408,34 +407,34 @@ export default function Order() {
     try {
       setError("");
 
-        const orderResponse = await createOrder({
-          stationId: Number(stationId),
-          items: cartItems.map((item) => ({
-            snackId: item.id,
-            qty: cart[item.id],
-          })),
-          paymentMethod: "SANDBOX",
-        });
+      const orderResponse = await createOrder({
+        stationId: Number(stationId),
+        items: cartItems.map((item) => ({
+          snackId: item.id,
+          qty: cart[item.id],
+        })),
+        paymentMethod: "SANDBOX",
+      });
 
-        const createdOrder = orderResponse.data;
+      const createdOrder = orderResponse.data;
 
-        const paymentsResponse = await getMyPayments();
-        const payments = paymentsResponse.data || [];
+      const paymentsResponse = await getMyPayments();
+      const payments = paymentsResponse.data || [];
 
-        const matchingPayment = payments.find(
-          (payment) =>
-            payment.type === "SNACK_ORDER" &&
-            Number(payment.referenceId) === Number(createdOrder.id)
-        );
+      const matchingPayment = payments.find(
+        (payment) =>
+          payment.type === "SNACK_ORDER" &&
+          Number(payment.referenceId) === Number(createdOrder.id),
+      );
 
-        setConfirmed(true);
-        setCart({});
+      setConfirmed(true);
+      setCart({});
 
-        if (matchingPayment) {
-          navigate(`/payments/sandbox/${matchingPayment.id}`);
-        } else {
-          await loadData();
-        }
+      if (matchingPayment) {
+        navigate(`/payments/sandbox/${matchingPayment.id}`);
+      } else {
+        await loadData();
+      }
     } catch (err) {
       setError(err.response?.data?.message || "Failed to place order.");
     }
@@ -448,6 +447,7 @@ export default function Order() {
     if (label === "Home") navigate("/dashboard");
     if (label === "Book") navigate("/booking");
     if (label === "Order") navigate("/order");
+    if (label === "Transactions") navigate("/transactions");
   };
 
   const handleLogout = () => {
@@ -526,7 +526,7 @@ export default function Order() {
           </div>
 
           <div style={{ display: "flex", gap: "6px" }}>
-            {["Home", "Book", "Order"].map((l) => (
+            {["Home", "Book", "Order", "Transactions"].map((l) => (
               <button
                 key={l}
                 onClick={() => handleNav(l)}
@@ -550,7 +550,10 @@ export default function Order() {
 
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
             <span style={{ fontSize: "14px", color: "#fff", fontWeight: 500 }}>
-              Welcome, <span style={{ color: CYAN, fontWeight: 700 }}>{user.fullName || "Player"}</span>
+              Welcome,{" "}
+              <span style={{ color: CYAN, fontWeight: 700 }}>
+                {user.fullName || "Player"}
+              </span>
             </span>
             <div style={{ position: "relative", cursor: "pointer" }}>
               <span style={{ fontSize: "20px" }}>🔔</span>
@@ -645,7 +648,9 @@ export default function Order() {
                 transition: "border-color 0.2s",
               }}
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = CYAN)}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#2a2a2a")}
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.borderColor = "#2a2a2a")
+              }
             >
               ←
             </button>
@@ -672,7 +677,9 @@ export default function Order() {
               }}
             >
               ✅ Order confirmed! Your snacks are on their way to Station{" "}
-              {stations.find((s) => String(s.id) === String(stationId))?.stationNo || stationId}. 🎮
+              {stations.find((s) => String(s.id) === String(stationId))
+                ?.stationNo || stationId}
+              . 🎮
             </div>
           )}
 
@@ -694,7 +701,9 @@ export default function Order() {
             </div>
           )}
 
-          <div style={{ display: "flex", gap: "28px", alignItems: "flex-start" }}>
+          <div
+            style={{ display: "flex", gap: "28px", alignItems: "flex-start" }}
+          >
             <div style={{ flex: 1, minWidth: 0, paddingRight: "4px" }}>
               {loading ? (
                 <div style={{ color: MUTED }}>Loading snack menu...</div>
@@ -767,7 +776,9 @@ export default function Order() {
                 }}
               >
                 {cartItems.length === 0 ? (
-                  <div style={{ color: MUTED, fontSize: "14px" }}>No snacks added yet.</div>
+                  <div style={{ color: MUTED, fontSize: "14px" }}>
+                    No snacks added yet.
+                  </div>
                 ) : (
                   cartItems.map((item) => (
                     <div
@@ -782,7 +793,13 @@ export default function Order() {
                       }}
                     >
                       <div>
-                        <div style={{ color: "#fff", fontWeight: 700, fontSize: "14px" }}>
+                        <div
+                          style={{
+                            color: "#fff",
+                            fontWeight: 700,
+                            fontSize: "14px",
+                          }}
+                        >
                           {item.name}
                         </div>
                         <div style={{ color: MUTED, fontSize: "12px" }}>
@@ -823,7 +840,9 @@ export default function Order() {
                     alignItems: "center",
                   }}
                 >
-                  <span style={{ color: "#fff", fontWeight: 800, fontSize: "16px" }}>
+                  <span
+                    style={{ color: "#fff", fontWeight: 800, fontSize: "16px" }}
+                  >
                     Total
                   </span>
                   <span
@@ -831,7 +850,8 @@ export default function Order() {
                       color: total > 0 ? CYAN : "#444",
                       fontWeight: 900,
                       fontSize: "26px",
-                      textShadow: total > 0 ? `0 0 16px rgba(57,213,255,0.4)` : "none",
+                      textShadow:
+                        total > 0 ? `0 0 16px rgba(57,213,255,0.4)` : "none",
                     }}
                   >
                     ₱{total.toFixed(2)}
@@ -854,7 +874,10 @@ export default function Order() {
                   fontFamily: "'Montserrat', sans-serif",
                   marginBottom: "10px",
                   transition: "all 0.2s",
-                  boxShadow: cartItems.length > 0 ? `0 0 24px rgba(57,213,255,0.3)` : "none",
+                  boxShadow:
+                    cartItems.length > 0
+                      ? `0 0 24px rgba(57,213,255,0.3)`
+                      : "none",
                 }}
               >
                 Confirm Order
@@ -880,13 +903,27 @@ export default function Order() {
                 Cancel
               </button>
 
-              <div style={{ marginTop: "20px", borderTop: "1px solid #222", paddingTop: "16px" }}>
-                <div style={{ color: "#fff", fontWeight: 800, marginBottom: "12px" }}>
+              <div
+                style={{
+                  marginTop: "20px",
+                  borderTop: "1px solid #222",
+                  paddingTop: "16px",
+                }}
+              >
+                <div
+                  style={{
+                    color: "#fff",
+                    fontWeight: 800,
+                    marginBottom: "12px",
+                  }}
+                >
                   Latest Order
                 </div>
 
                 {orders.length === 0 ? (
-                  <div style={{ color: MUTED, fontSize: "13px" }}>No orders yet.</div>
+                  <div style={{ color: MUTED, fontSize: "13px" }}>
+                    No orders yet.
+                  </div>
                 ) : (
                   <div
                     style={{
@@ -899,10 +936,19 @@ export default function Order() {
                     <div style={{ color: "#fff", fontWeight: 700 }}>
                       Order #{orders[0].id}
                     </div>
-                    <div style={{ color: MUTED, fontSize: "13px", marginTop: "6px" }}>
-                      Station: {orders[0].station?.stationNo || orders[0].station?.id}
+                    <div
+                      style={{
+                        color: MUTED,
+                        fontSize: "13px",
+                        marginTop: "6px",
+                      }}
+                    >
+                      Station:{" "}
+                      {orders[0].station?.stationNo || orders[0].station?.id}
                     </div>
-                    <div style={{ color: CYAN, fontWeight: 800, marginTop: "8px" }}>
+                    <div
+                      style={{ color: CYAN, fontWeight: 800, marginTop: "8px" }}
+                    >
                       {orders[0].status} • ₱{Number(orders[0].total).toFixed(2)}
                     </div>
                   </div>
@@ -923,9 +969,11 @@ export default function Order() {
             gap: "12px",
           }}
         >
-          <span style={{ fontSize: "14px", color: MUTED }}>© ByteZone. All rights reserved.</span>
+          <span style={{ fontSize: "14px", color: MUTED }}>
+            © ByteZone. All rights reserved.
+          </span>
           <div style={{ display: "flex", gap: "24px" }}>
-            {["Home", "Book", "Order"].map((l) => (
+            {["Home", "Book", "Order", "Transactions"].map((l) => (
               <span
                 key={l}
                 style={{
