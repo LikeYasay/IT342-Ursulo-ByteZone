@@ -15,6 +15,7 @@ export default function UserNavbar() {
     { label: "Home", path: "/dashboard" },
     { label: "Book", path: "/booking" },
     { label: "Order", path: "/order" },
+    { label: "Transactions", path: "/transactions" },
   ];
 
   const handleLogout = () => {
