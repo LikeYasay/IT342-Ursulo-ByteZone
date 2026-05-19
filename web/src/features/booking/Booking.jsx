@@ -5,13 +5,17 @@ import {
   getMyReservations,
   getStations,
 } from "./bookingService";
-import { logoutUser } from "../auth/authService";
+import { getCurrentUser, logoutUser } from "../auth/authService";
 
 const CYAN = "#39d5ff";
 const DARK_BG = "#000000";
 const CARD_BG = "#1c1c1c";
 const BORDER = "#39d5ff";
 const MUTED = "#8a8f98";
+
+function getUserImageUrl(user) {
+  return user?.profileImageUrl || user?.profile_image_url || "";
+}
 const INPUT_BG = "#1c1c1c";
 const INPUT_BORDER = "#2a2a2a";
 
@@ -98,7 +102,9 @@ function StationCell({ station, onClick }) {
 
 export default function Booking() {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const [user, setUser] = useState(
+    JSON.parse(localStorage.getItem("user") || "{}")
+  );
 
   const [activeNav, setActiveNav] = useState("Book");
   const [stations, setStations] = useState([]);
@@ -126,10 +132,14 @@ export default function Booking() {
       setLoading(true);
       setError("");
 
-      const [stationsRes, reservationsRes] = await Promise.all([
+      const [stationsRes, reservationsRes, userRes] = await Promise.all([
         getStations(),
         getMyReservations(),
+        getCurrentUser(),
       ]);
+
+      setUser(userRes.data);
+      localStorage.setItem("user", JSON.stringify(userRes.data));
 
       const mappedStations = (stationsRes.data || []).map((station) => ({
         ...station,
@@ -247,6 +257,7 @@ export default function Booking() {
     : null;
 
   const latestReservation = myReservations[0];
+  const profileImageUrl = getUserImageUrl(user);
 
   return (
     <>
@@ -420,7 +431,6 @@ export default function Booking() {
                 }}
               />
             </div>
-
             <button
               onClick={() => navigate("/profile")}
               title="View Profile"
@@ -428,7 +438,9 @@ export default function Booking() {
                 width: "38px",
                 height: "38px",
                 borderRadius: "50%",
-                background: `linear-gradient(135deg, ${CYAN}, #0070a8)`,
+                background: profileImageUrl
+                  ? "#111"
+                  : `linear-gradient(135deg, ${CYAN}, #0070a8)`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -438,9 +450,23 @@ export default function Booking() {
                 border: `2px solid ${CYAN}`,
                 cursor: "pointer",
                 fontFamily: "'Montserrat', sans-serif",
+                overflow: "hidden",
+                padding: 0,
               }}
             >
-              {(user.fullName || "L").charAt(0).toUpperCase()}
+              {profileImageUrl ? (
+                <img
+                  src={profileImageUrl}
+                  alt="Profile"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                />
+              ) : (
+                (user.fullName || "L").charAt(0).toUpperCase()
+              )}
             </button>
 
             <button

@@ -3,13 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { getSnacks, createOrder, getMyOrders } from "./orderService";
 import { getStations } from "../booking/bookingService";
 import { getMyPayments } from "../payments/paymentService";
-import { logoutUser } from "../auth/authService";
+import { getCurrentUser, logoutUser } from "../auth/authService";
 
 const CYAN = "#39d5ff";
 const DARK_BG = "#000000";
 const CARD_BG = "#1c1c1c";
 const BORDER = "#39d5ff";
 const MUTED = "#8a8f98";
+
+function getUserImageUrl(user) {
+  return user?.profileImageUrl || user?.profile_image_url || "";
+}
 
 const ITEMS_VISIBLE = 4;
 
@@ -326,7 +330,9 @@ function getEmoji(name) {
 
 export default function Order() {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const [user, setUser] = useState(
+    JSON.parse(localStorage.getItem("user") || "{}")
+  );
 
   const [activeNav, setActiveNav] = useState("Order");
   const [cart, setCart] = useState({});
@@ -347,11 +353,15 @@ export default function Order() {
       setLoading(true);
       setError("");
 
-      const [snackRes, orderRes, stationRes] = await Promise.all([
+      const [snackRes, orderRes, stationRes, userRes] = await Promise.all([
         getSnacks(),
         getMyOrders(),
         getStations(),
+        getCurrentUser(),
       ]);
+
+      setUser(userRes.data);
+      localStorage.setItem("user", JSON.stringify(userRes.data));
 
       const mappedSnacks = (snackRes.data || []).map((item) => ({
         ...item,
@@ -454,6 +464,8 @@ export default function Order() {
     logoutUser();
     navigate("/login");
   };
+
+  const profileImageUrl = getUserImageUrl(user);
 
   return (
     <>
@@ -577,7 +589,9 @@ export default function Order() {
                 width: "38px",
                 height: "38px",
                 borderRadius: "50%",
-                background: `linear-gradient(135deg, ${CYAN}, #0070a8)`,
+                background: profileImageUrl
+                  ? "#111"
+                  : `linear-gradient(135deg, ${CYAN}, #0070a8)`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -587,9 +601,23 @@ export default function Order() {
                 border: `2px solid ${CYAN}`,
                 cursor: "pointer",
                 fontFamily: "'Montserrat', sans-serif",
+                overflow: "hidden",
+                padding: 0,
               }}
             >
-              {(user.fullName || "L").charAt(0).toUpperCase()}
+              {profileImageUrl ? (
+                <img
+                  src={profileImageUrl}
+                  alt="Profile"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                />
+              ) : (
+                (user.fullName || "L").charAt(0).toUpperCase()
+              )}
             </button>
             <button
               onClick={handleLogout}

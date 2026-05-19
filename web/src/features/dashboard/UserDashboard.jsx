@@ -15,6 +15,10 @@ const BORDER = "#39d5ff";
 const INNER_CARD = "#333";
 const MUTED = "#8a8f98";
 
+function getUserImageUrl(user) {
+  return user?.profileImageUrl || user?.profile_image_url || "";
+}
+
 const GAMES = [
   {
     name: "Valorant",
@@ -241,6 +245,7 @@ export default function UserDashboard() {
       ]);
 
       setUser(userRes.data);
+      localStorage.setItem("user", JSON.stringify(userRes.data));
       setReservations(reservationRes.data || []);
       setOrders(orderRes.data || []);
       setPayments(paymentRes.data || []);
@@ -323,6 +328,7 @@ export default function UserDashboard() {
 
   const displayName = user?.fullName || "Player";
   const displayInitial = displayName.charAt(0).toUpperCase();
+  const profileImageUrl = getUserImageUrl(user);
 
   const totalHours = user?.totalHoursPlayed ?? 0;
   const tournamentWins = user?.tournamentWins ?? 0;
@@ -467,7 +473,6 @@ export default function UserDashboard() {
             </span>
 
             <NotificationBell />
-
             <button
               onClick={() => navigate("/profile")}
               title="View Profile"
@@ -475,7 +480,9 @@ export default function UserDashboard() {
                 width: "38px",
                 height: "38px",
                 borderRadius: "50%",
-                background: `linear-gradient(135deg, ${CYAN}, #0070a8)`,
+                background: profileImageUrl
+                  ? "#111"
+                  : `linear-gradient(135deg, ${CYAN}, #0070a8)`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -485,9 +492,23 @@ export default function UserDashboard() {
                 border: `2px solid ${CYAN}`,
                 cursor: "pointer",
                 fontFamily: "'Montserrat', sans-serif",
+                overflow: "hidden",
+                padding: 0,
               }}
             >
-              {displayInitial}
+              {profileImageUrl ? (
+                <img
+                  src={profileImageUrl}
+                  alt="Profile"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                />
+              ) : (
+                displayInitial
+              )}
             </button>
 
             <button
