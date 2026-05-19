@@ -570,7 +570,9 @@ export default function Order() {
                 }}
               />
             </div>
-            <div
+            <button
+              onClick={() => navigate("/profile")}
+              title="View Profile"
               style={{
                 width: "38px",
                 height: "38px",
@@ -583,10 +585,12 @@ export default function Order() {
                 fontWeight: 800,
                 color: "#000",
                 border: `2px solid ${CYAN}`,
+                cursor: "pointer",
+                fontFamily: "'Montserrat', sans-serif",
               }}
             >
               {(user.fullName || "L").charAt(0).toUpperCase()}
-            </div>
+            </button>
             <button
               onClick={handleLogout}
               style={{

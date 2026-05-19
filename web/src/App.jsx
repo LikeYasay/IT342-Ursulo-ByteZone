@@ -18,6 +18,7 @@ import SandboxCheckout from "./features/payments/SandboxCheckout.jsx";
 import AdminReservations from "./features/admin/AdminReservations.jsx";
 import UserTransactionHistory from "./features/payments/UserTransactionHistory.jsx";
 import AdminStations from "./features/admin/AdminStations.jsx";
+import UserProfile from "./features/profile/UserProfile.jsx";
 
 function App() {
   return (
@@ -60,7 +61,7 @@ function App() {
             <AdminDashboard />
           </RoleProtectedRoute>
         }
-      />  
+      />
 
       <Route
         path="/admin/usermanagement"
@@ -126,21 +127,21 @@ function App() {
       />
 
       <Route
-      path="/admin/reservations"
-      element={
-        <RoleProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
-          <AdminReservations />
-        </RoleProtectedRoute>
-      }
+        path="/admin/reservations"
+        element={
+          <RoleProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+            <AdminReservations />
+          </RoleProtectedRoute>
+        }
       />
       <Route
-      path="/admin/stations"
-      element={
-        <RoleProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
-          <AdminStations />
-        </RoleProtectedRoute>
-      }
-    />
+        path="/admin/stations"
+        element={
+          <RoleProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+            <AdminStations />
+          </RoleProtectedRoute>
+        }
+      />
 
       <Route
         path="/payments/sandbox/:paymentId"
@@ -155,6 +156,15 @@ function App() {
         element={
           <RoleProtectedRoute allowedRoles={["USER"]}>
             <UserTransactionHistory />
+          </RoleProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/profile"
+        element={
+          <RoleProtectedRoute allowedRoles={["USER"]}>
+            <UserProfile />
           </RoleProtectedRoute>
         }
       />

@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createReservation, getMyReservations, getStations } from "./bookingService";
+import {
+  createReservation,
+  getMyReservations,
+  getStations,
+} from "./bookingService";
 import { logoutUser } from "../auth/authService";
 
 const CYAN = "#39d5ff";
@@ -161,12 +165,19 @@ export default function Booking() {
   const total = durationHours * RATE_PER_HOUR;
 
   const durationMinutes = useMemo(() => {
-    const found = DURATION_OPTIONS.find((d) => String(d.minutes / 60) === selectedDuration);
+    const found = DURATION_OPTIONS.find(
+      (d) => String(d.minutes / 60) === selectedDuration,
+    );
     return found ? found.minutes : 0;
   }, [selectedDuration]);
 
   const handleConfirm = async () => {
-    if (!selectedStation || !selectedDate || !selectedTime || !selectedDuration) {
+    if (
+      !selectedStation ||
+      !selectedDate ||
+      !selectedTime ||
+      !selectedDuration
+    ) {
       setError("Please complete all booking details.");
       return;
     }
@@ -410,7 +421,9 @@ export default function Booking() {
               />
             </div>
 
-            <div
+            <button
+              onClick={() => navigate("/profile")}
+              title="View Profile"
               style={{
                 width: "38px",
                 height: "38px",
@@ -423,10 +436,12 @@ export default function Booking() {
                 fontWeight: 800,
                 color: "#000",
                 border: `2px solid ${CYAN}`,
+                cursor: "pointer",
+                fontFamily: "'Montserrat', sans-serif",
               }}
             >
               {(user.fullName || "L").charAt(0).toUpperCase()}
-            </div>
+            </button>
 
             <button
               onClick={handleLogout}
@@ -492,7 +507,9 @@ export default function Booking() {
                 transition: "border-color 0.2s",
               }}
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = CYAN)}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#2a2a2a")}
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.borderColor = "#2a2a2a")
+              }
             >
               ←
             </button>
@@ -552,7 +569,9 @@ export default function Booking() {
             </div>
           )}
 
-          <div style={{ display: "flex", gap: "20px", alignItems: "flex-start" }}>
+          <div
+            style={{ display: "flex", gap: "20px", alignItems: "flex-start" }}
+          >
             <div
               style={{
                 flex: "0 0 auto",
@@ -576,7 +595,13 @@ export default function Booking() {
               </h2>
 
               {loading ? (
-                <div style={{ color: MUTED, textAlign: "center", padding: "30px 0" }}>
+                <div
+                  style={{
+                    color: MUTED,
+                    textAlign: "center",
+                    padding: "30px 0",
+                  }}
+                >
                   Loading stations...
                 </div>
               ) : (
@@ -618,7 +643,11 @@ export default function Booking() {
                 ].map((item) => (
                   <div
                     key={item.label}
-                    style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
                   >
                     <div
                       style={{
@@ -629,7 +658,9 @@ export default function Booking() {
                         border: `1px solid ${item.border}`,
                       }}
                     />
-                    <span style={{ fontSize: "13px", color: "#fff" }}>{item.label}</span>
+                    <span style={{ fontSize: "13px", color: "#fff" }}>
+                      {item.label}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -656,7 +687,13 @@ export default function Booking() {
                 <span style={{ color: CYAN }}>Summary</span>
               </h2>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "14px",
+                }}
+              >
                 <div style={{ position: "relative" }}>
                   <button
                     onClick={() => {
@@ -765,8 +802,8 @@ export default function Booking() {
                     <span style={summaryLabelStyle}>Station</span>
                     <span style={summaryValueStyle}>
                       {selectedStation
-                        ? stations.find((s) => s.id === selectedStation)?.stationNo ||
-                          `S${selectedStation}`
+                        ? stations.find((s) => s.id === selectedStation)
+                            ?.stationNo || `S${selectedStation}`
                         : "--"}
                     </span>
                   </div>
@@ -798,7 +835,9 @@ export default function Booking() {
                       borderTop: "1px solid #2a2a2a",
                     }}
                   >
-                    <span style={{ ...summaryLabelStyle, fontWeight: 800 }}>Estimated Total</span>
+                    <span style={{ ...summaryLabelStyle, fontWeight: 800 }}>
+                      Estimated Total
+                    </span>
                     <span
                       style={{
                         color: CYAN,
@@ -876,15 +915,29 @@ export default function Booking() {
                       padding: "14px",
                     }}
                   >
-                    <div style={{ color: "#fff", fontWeight: 700, marginBottom: "6px" }}>
+                    <div
+                      style={{
+                        color: "#fff",
+                        fontWeight: 700,
+                        marginBottom: "6px",
+                      }}
+                    >
                       {latestReservation.station?.stationNo ||
                         `Station ${latestReservation.station?.id ?? ""}`}
                     </div>
-                    <div style={{ color: MUTED, fontSize: "13px", lineHeight: 1.6 }}>
+                    <div
+                      style={{
+                        color: MUTED,
+                        fontSize: "13px",
+                        lineHeight: 1.6,
+                      }}
+                    >
                       {latestReservation.date} • {latestReservation.startTime} •{" "}
                       {latestReservation.durationMinutes} mins
                     </div>
-                    <div style={{ color: CYAN, fontWeight: 800, marginTop: "8px" }}>
+                    <div
+                      style={{ color: CYAN, fontWeight: 800, marginTop: "8px" }}
+                    >
                       {latestReservation.status}
                     </div>
                   </div>

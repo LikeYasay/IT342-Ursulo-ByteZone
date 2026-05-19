@@ -270,7 +270,7 @@ export default function UserDashboard() {
   const latestReservation = activeSession
     ? null
     : reservations.find((reservation) =>
-        activeReservationStatuses.includes(reservation.status)
+        activeReservationStatuses.includes(reservation.status),
       );
   const latestOrder = orders[0];
   const latestPayment = payments[0];
@@ -468,7 +468,9 @@ export default function UserDashboard() {
 
             <NotificationBell />
 
-            <div
+            <button
+              onClick={() => navigate("/profile")}
+              title="View Profile"
               style={{
                 width: "38px",
                 height: "38px",
@@ -481,10 +483,12 @@ export default function UserDashboard() {
                 fontWeight: 800,
                 color: "#000",
                 border: `2px solid ${CYAN}`,
+                cursor: "pointer",
+                fontFamily: "'Montserrat', sans-serif",
               }}
             >
               {displayInitial}
-            </div>
+            </button>
 
             <button
               onClick={handleLogout}
