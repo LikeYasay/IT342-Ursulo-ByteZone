@@ -265,7 +265,13 @@ export default function UserDashboard() {
     navigate("/login");
   };
 
-  const latestReservation = reservations[0];
+  const activeReservationStatuses = ["PENDING", "APPROVED"];
+
+  const latestReservation = activeSession
+    ? null
+    : reservations.find((reservation) =>
+        activeReservationStatuses.includes(reservation.status)
+      );
   const latestOrder = orders[0];
   const latestPayment = payments[0];
   const unpaidPayments = payments.filter(
@@ -332,7 +338,6 @@ export default function UserDashboard() {
 
   const currentStation =
     activeSession?.station?.stationNo ||
-    latestReservation?.station?.stationNo ||
     latestOrder?.station?.stationNo ||
     "N/A";
 

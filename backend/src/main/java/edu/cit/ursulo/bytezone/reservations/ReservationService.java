@@ -1,15 +1,20 @@
 package edu.cit.ursulo.bytezone.reservations;
 
 import edu.cit.ursulo.bytezone.auth.CurrentUserService;
+import edu.cit.ursulo.bytezone.notifications.NotificationService;
+import edu.cit.ursulo.bytezone.notifications.NotificationType;
+import edu.cit.ursulo.bytezone.sessions.CafeSession;
+import edu.cit.ursulo.bytezone.sessions.CafeSessionRepository;
+import edu.cit.ursulo.bytezone.sessions.SessionStatus;
 import edu.cit.ursulo.bytezone.stations.Station;
 import edu.cit.ursulo.bytezone.stations.StationRepository;
+import edu.cit.ursulo.bytezone.stations.StationStatus;
 import edu.cit.ursulo.bytezone.users.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import edu.cit.ursulo.bytezone.notifications.NotificationService;
-import edu.cit.ursulo.bytezone.notifications.NotificationType;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -19,16 +24,19 @@ public class ReservationService {
     private final StationRepository stationRepository;
     private final CurrentUserService currentUserService;
     private final NotificationService notificationService;
+    private final CafeSessionRepository cafeSessionRepository;
 
     public ReservationService(ReservationRepository reservationRepository,
-                          StationRepository stationRepository,
-                          CurrentUserService currentUserService,
-                          NotificationService notificationService) {
-                this.reservationRepository = reservationRepository;
-                this.stationRepository = stationRepository;
-                this.currentUserService = currentUserService;
-                this.notificationService = notificationService;
-            }
+                              StationRepository stationRepository,
+                              CurrentUserService currentUserService,
+                              NotificationService notificationService,
+                              CafeSessionRepository cafeSessionRepository) {
+        this.reservationRepository = reservationRepository;
+        this.stationRepository = stationRepository;
+        this.currentUserService = currentUserService;
+        this.notificationService = notificationService;
+        this.cafeSessionRepository = cafeSessionRepository;
+    }
 
     @Transactional
     public Reservation create(CreateReservationRequest request) {
@@ -87,7 +95,13 @@ public class ReservationService {
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Reservation not found"));
 
-        reservation.setStatus(request.getStatus());
+        ReservationStatus newStatus = request.getStatus();
+
+        if (newStatus == ReservationStatus.CHECKED_IN) {
+            checkInReservation(reservation);
+        }
+
+        reservation.setStatus(newStatus);
         Reservation saved = reservationRepository.save(reservation);
 
         notificationService.create(
@@ -98,5 +112,36 @@ public class ReservationService {
         );
 
         return saved;
+    }
+
+    private void checkInReservation(Reservation reservation) {
+        Station station = reservation.getStation();
+
+        if (station.getStatus() != StationStatus.AVAILABLE
+                && station.getStatus() != StationStatus.RESERVED) {
+            throw new RuntimeException("Station is not available for check-in");
+        }
+
+        cafeSessionRepository.findByStationIdAndStatus(station.getId(), SessionStatus.ACTIVE)
+                .ifPresent(session -> {
+                    throw new RuntimeException("There is already an active session on this station");
+                });
+
+        cafeSessionRepository.findByUserIdAndStatus(reservation.getUser().getId(), SessionStatus.ACTIVE)
+                .ifPresent(session -> {
+                    throw new RuntimeException("User already has an active session");
+                });
+
+        CafeSession session = new CafeSession();
+        session.setUser(reservation.getUser());
+        session.setStation(station);
+        session.setStartTime(LocalDateTime.now());
+        session.setEndTime(LocalDateTime.now().plusMinutes(reservation.getDurationMinutes()));
+        session.setStatus(SessionStatus.ACTIVE);
+
+        station.setStatus(StationStatus.IN_USE);
+        stationRepository.save(station);
+
+        cafeSessionRepository.save(session);
     }
 }
