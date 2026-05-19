@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getCurrentUser, logoutUser } from "../auth/authService";
+import {
+  getCurrentUser,
+  logoutUser,
+  uploadMyProfileImage,
+} from "../auth/authService";
 import NotificationBell from "../notifications/NotificationBell.jsx";
 
 const CYAN = "#39d5ff";
@@ -65,15 +69,27 @@ export default function UserProfile() {
     fileInputRef.current?.click();
   };
 
-  const handleImageChange = (event) => {
+  const handleImageChange = async (event) => {
     const file = event.target.files?.[0];
 
     if (!file) return;
 
     setProfilePreview(URL.createObjectURL(file));
-    setMessage(
-      "Profile picture selected. Upload saving will be connected in the file upload feature.",
-    );
+    setMessage("");
+    setError("");
+
+    try {
+      const response = await uploadMyProfileImage(file);
+      const updatedUser = response.data;
+
+      setUser(updatedUser);
+      setProfilePreview(updatedUser.profileImageUrl || "");
+      setMessage("Profile picture updated successfully.");
+    } catch (err) {
+      setError(
+        err.response?.data?.message || "Failed to upload profile image.",
+      );
+    }
   };
 
   const handleUpdate = () => {
@@ -325,9 +341,9 @@ export default function UserProfile() {
                     boxShadow: "0 0 20px rgba(57,213,255,0.12)",
                   }}
                 >
-                  {profilePreview ? (
+                  {profilePreview || user?.profileImageUrl ? (
                     <img
-                      src={profilePreview}
+                      src={profilePreview || user?.profileImageUrl}
                       alt="Profile preview"
                       style={{
                         width: "100%",

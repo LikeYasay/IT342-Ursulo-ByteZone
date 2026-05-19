@@ -19,3 +19,16 @@ export const logoutUser = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
 };
+
+export const uploadMyProfileImage = async (file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await api.put("/api/user/me/profile-image", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return response.data;
+};
