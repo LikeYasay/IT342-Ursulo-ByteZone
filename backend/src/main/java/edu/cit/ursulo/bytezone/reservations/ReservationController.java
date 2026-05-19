@@ -44,7 +44,7 @@ public class ReservationController {
     }
 
     @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
-    @PutMapping("/{id}")
+    @PutMapping("/{id}/status")
     public ResponseEntity<ApiResponse<Reservation>> updateStatus(
             @PathVariable Long id,
             @Valid @RequestBody UpdateReservationStatusRequest request
