@@ -284,13 +284,16 @@ export default function UserDashboard() {
   const latestReservation = reservations[0];
   const latestOrder = orders[0];
   const latestPayment = payments[0];
+  const unpaidPayments = payments.filter(
+  (payment) =>
+    payment.status === "INITIATED" ||
+    payment.status === "PROCESSING" ||
+    payment.status === "PENDING"
+);
 
-  const pendingPayments = payments.filter(
-    (p) =>
-      p.status === "PENDING" ||
-      p.status === "INITIATED" ||
-      p.status === "PROCESSING"
-  ).length;
+const latestUnpaidPayment = unpaidPayments[0];
+
+  const pendingPayments = unpaidPayments.length;
 
   const updates = useMemo(() => {
     const list = [];
@@ -1031,21 +1034,46 @@ const sessionStatus = activeSession?.status || "Inactive";
             </div>
 
             <div className="dash-section">
-              <SectionCard title="Pending" accentWord="Payments">
-                <div style={{ display: "flex", gap: "12px" }}>
-                  <StatCard label="Count" value={pendingPayments} small />
-                  <StatCard
-                    label="Latest"
-                    value={
-                      latestPayment
-                        ? `₱${Number(latestPayment.amount).toFixed(0)}`
-                        : "₱0"
-                    }
-                    small
-                  />
-                </div>
-              </SectionCard>
-            </div>
+  <SectionCard title="Pending" accentWord="Payments">
+    <div style={{ display: "flex", gap: "12px", marginBottom: "12px" }}>
+      <StatCard label="Count" value={pendingPayments} small />
+      <StatCard
+        label="Latest"
+        value={
+          latestUnpaidPayment
+            ? `₱${Number(latestUnpaidPayment.amount).toFixed(0)}`
+            : "₱0"
+        }
+        small
+      />
+    </div>
+
+        {latestUnpaidPayment ? (
+          <button
+            onClick={() =>
+              navigate(`/payments/sandbox/${latestUnpaidPayment.id}`)
+            }
+            style={{
+              width: "100%",
+              padding: "12px 14px",
+              borderRadius: "10px",
+              border: "none",
+              background: CYAN,
+              color: "#000",
+              fontWeight: 900,
+              cursor: "pointer",
+              fontFamily: "'Montserrat', sans-serif",
+            }}
+          >
+            Pay Now
+          </button>
+        ) : (
+          <p style={{ color: MUTED, fontSize: "13px", textAlign: "center" }}>
+            No pending payments.
+          </p>
+        )}
+      </SectionCard>
+    </div>
           </div>
         </main>
 
