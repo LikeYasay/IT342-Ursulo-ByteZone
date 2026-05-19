@@ -29,6 +29,9 @@ public class User {
     @Column(name = "tournament_wins", nullable = false)
     private Integer tournamentWins = 0;
 
+    @Column(name = "profile_image_url")
+    private String profileImageUrl;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -72,6 +75,10 @@ public class User {
         return tournamentWins;
     }
 
+    public String getProfileImageUrl() {
+    return profileImageUrl;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -98,6 +105,10 @@ public class User {
 
     public void setTournamentWins(Integer tournamentWins) {
         this.tournamentWins = tournamentWins;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+    this.profileImageUrl = profileImageUrl;
     }
 
     public void setCreatedAt(LocalDateTime createdAt) {
