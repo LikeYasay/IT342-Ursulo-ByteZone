@@ -199,7 +199,6 @@ export default function UserDashboard() {
   const [error, setError] = useState("");
   const [activeSession, setActiveSession] = useState(null);
   const [remainingTime, setRemainingTime] = useState("00:00:00");
-  const [reservationTime, setReservationTime] = useState("00:00:00");
 
   const visibleGames = 4;
   const canPrev = gameIdx > 0;
@@ -211,31 +210,15 @@ export default function UserDashboard() {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      const latestReservation = reservations[0];
-
-      setReservationTime(
-        latestReservation
-          ? formatCountdown(
-              new Date(
-                `${latestReservation.date}T${latestReservation.startTime}`
-              ).toISOString()
-            )
-          : "00:00:00"
+      setRemainingTime(
+        activeSession?.endTime
+          ? formatCountdown(activeSession.endTime)
+          : "00:00:00",
       );
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [reservations]);
-
-  useEffect(() => {
-  const timer = setInterval(() => {
-    setRemainingTime(
-      activeSession?.endTime ? formatCountdown(activeSession.endTime) : "00:00:00"
-    );
-  }, 1000);
-
-  return () => clearInterval(timer);
-}, [activeSession]);
+  }, [activeSession]);
 
   async function loadDashboard() {
     try {
@@ -286,13 +269,13 @@ export default function UserDashboard() {
   const latestOrder = orders[0];
   const latestPayment = payments[0];
   const unpaidPayments = payments.filter(
-  (payment) =>
-    payment.status === "INITIATED" ||
-    payment.status === "PROCESSING" ||
-    payment.status === "PENDING"
-);
+    (payment) =>
+      payment.status === "INITIATED" ||
+      payment.status === "PROCESSING" ||
+      payment.status === "PENDING",
+  );
 
-const latestUnpaidPayment = unpaidPayments[0];
+  const latestUnpaidPayment = unpaidPayments[0];
 
   const pendingPayments = unpaidPayments.length;
 
@@ -314,7 +297,7 @@ const latestUnpaidPayment = unpaidPayments[0];
         title: "Latest Order",
         time: `Order #${latestOrder.id}`,
         detail: `${latestOrder.status} • ₱${Number(latestOrder.total).toFixed(
-          2
+          2,
         )}`,
       });
     }
@@ -324,7 +307,7 @@ const latestUnpaidPayment = unpaidPayments[0];
         title: "Latest Payment",
         time: latestPayment.type,
         detail: `${latestPayment.status} • ₱${Number(
-          latestPayment.amount
+          latestPayment.amount,
         ).toFixed(2)}`,
       });
     }
@@ -347,27 +330,32 @@ const latestUnpaidPayment = unpaidPayments[0];
       })
     : "N/A";
 
-const currentStation =
-  activeSession?.station?.stationNo ||
-  latestReservation?.station?.stationNo ||
-  latestOrder?.station?.stationNo ||
-  "N/A";
+  const currentStation =
+    activeSession?.station?.stationNo ||
+    latestReservation?.station?.stationNo ||
+    latestOrder?.station?.stationNo ||
+    "N/A";
 
-const reservedStation = latestReservation?.station?.stationNo || "N/A";
+  const reservedStation = latestReservation?.station?.stationNo || "N/A";
 
-const reservationDate = latestReservation?.date
-  ? new Date(latestReservation.date).toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    })
-  : "N/A";
+  const reservationDate = latestReservation?.date
+    ? new Date(latestReservation.date).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "N/A";
 
-const reservationTimeRange = latestReservation?.startTime
-  ? `${latestReservation.startTime} – ${latestReservation.endTime || ""}`
-  : "N/A";
+  const reservationTimeRange = latestReservation?.startTime
+    ? `${latestReservation.startTime} – ${latestReservation.endTime || ""}`
+    : "N/A";
 
-const sessionStatus = activeSession?.status || "Inactive";
+  const sessionStatus = activeSession?.status || "Inactive";
+  const reservationStatus = latestReservation?.status || "No Reservation";
+
+  const reservationDuration = latestReservation?.durationMinutes
+    ? `${latestReservation.durationMinutes} min`
+    : "N/A";
 
   return (
     <>
@@ -616,7 +604,7 @@ const sessionStatus = activeSession?.status || "Inactive";
                   </div>
 
                   <StatCard label="Reserved Station" value={reservedStation} />
-                  <StatCard label="Hours Remaining" value={reservationTime} />
+                  <StatCard label="Duration" value={reservationDuration} />
 
                   <div
                     style={{
@@ -635,7 +623,7 @@ const sessionStatus = activeSession?.status || "Inactive";
                         fontWeight: 500,
                       }}
                     >
-                      Session Status
+                      Reservation Status
                     </div>
 
                     <span
@@ -643,8 +631,8 @@ const sessionStatus = activeSession?.status || "Inactive";
                         display: "inline-block",
                         padding: "6px 18px",
                         background:
-                          sessionStatus === "Inactive" ||
-                          sessionStatus === "PENDING"
+                          reservationStatus === "No Reservation" ||
+                          reservationStatus === "PENDING"
                             ? "#555"
                             : "rgba(57,213,255,0.2)",
                         borderRadius: "8px",
@@ -653,7 +641,7 @@ const sessionStatus = activeSession?.status || "Inactive";
                         color: "#fff",
                       }}
                     >
-                      {sessionStatus}
+                      {reservationStatus}
                     </span>
                   </div>
                 </div>
@@ -669,7 +657,9 @@ const sessionStatus = activeSession?.status || "Inactive";
               </div>
 
               <div style={{ position: "relative" }}>
-                <div style={{ display: "flex", gap: "14px", overflow: "hidden" }}>
+                <div
+                  style={{ display: "flex", gap: "14px", overflow: "hidden" }}
+                >
                   {GAMES.slice(gameIdx, gameIdx + visibleGames).map((game) => (
                     <div
                       key={game.name}
@@ -894,7 +884,13 @@ const sessionStatus = activeSession?.status || "Inactive";
 
             <div className="dash-section">
               <SectionCard title="Quick" accentWord="Actions">
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "10px",
+                  }}
+                >
                   <QuickActionBtn
                     label="Book Station"
                     icon="🖥️"
@@ -921,7 +917,13 @@ const sessionStatus = activeSession?.status || "Inactive";
 
             <div className="dash-section">
               <SectionCard title="ByteZone" accentWord="Updates">
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "10px",
+                  }}
+                >
                   <div style={{ marginBottom: "8px" }}>
                     <h3
                       style={{
@@ -979,7 +981,9 @@ const sessionStatus = activeSession?.status || "Inactive";
                             }}
                           >
                             {announcement.createdAt
-                              ? new Date(announcement.createdAt).toLocaleString()
+                              ? new Date(
+                                  announcement.createdAt,
+                                ).toLocaleString()
                               : ""}
                           </div>
                         </div>
@@ -1000,7 +1004,8 @@ const sessionStatus = activeSession?.status || "Inactive";
                           hoveredUpdate === i ? CYAN : "transparent"
                         }`,
                         transition: "border-color 0.2s, transform 0.2s",
-                        transform: hoveredUpdate === i ? "translateX(3px)" : "none",
+                        transform:
+                          hoveredUpdate === i ? "translateX(3px)" : "none",
                         cursor: "pointer",
                       }}
                     >
@@ -1035,46 +1040,54 @@ const sessionStatus = activeSession?.status || "Inactive";
             </div>
 
             <div className="dash-section">
-  <SectionCard title="Pending" accentWord="Payments">
-    <div style={{ display: "flex", gap: "12px", marginBottom: "12px" }}>
-      <StatCard label="Count" value={pendingPayments} small />
-      <StatCard
-        label="Latest"
-        value={
-          latestUnpaidPayment
-            ? `₱${Number(latestUnpaidPayment.amount).toFixed(0)}`
-            : "₱0"
-        }
-        small
-      />
-    </div>
+              <SectionCard title="Pending" accentWord="Payments">
+                <div
+                  style={{ display: "flex", gap: "12px", marginBottom: "12px" }}
+                >
+                  <StatCard label="Count" value={pendingPayments} small />
+                  <StatCard
+                    label="Latest"
+                    value={
+                      latestUnpaidPayment
+                        ? `₱${Number(latestUnpaidPayment.amount).toFixed(0)}`
+                        : "₱0"
+                    }
+                    small
+                  />
+                </div>
 
-        {latestUnpaidPayment ? (
-          <button
-            onClick={() =>
-              navigate(`/payments/sandbox/${latestUnpaidPayment.id}`)
-            }
-            style={{
-              width: "100%",
-              padding: "12px 14px",
-              borderRadius: "10px",
-              border: "none",
-              background: CYAN,
-              color: "#000",
-              fontWeight: 900,
-              cursor: "pointer",
-              fontFamily: "'Montserrat', sans-serif",
-            }}
-          >
-            Pay Now
-          </button>
-        ) : (
-          <p style={{ color: MUTED, fontSize: "13px", textAlign: "center" }}>
-            No pending payments.
-          </p>
-        )}
-      </SectionCard>
-    </div>
+                {latestUnpaidPayment ? (
+                  <button
+                    onClick={() =>
+                      navigate(`/payments/sandbox/${latestUnpaidPayment.id}`)
+                    }
+                    style={{
+                      width: "100%",
+                      padding: "12px 14px",
+                      borderRadius: "10px",
+                      border: "none",
+                      background: CYAN,
+                      color: "#000",
+                      fontWeight: 900,
+                      cursor: "pointer",
+                      fontFamily: "'Montserrat', sans-serif",
+                    }}
+                  >
+                    Pay Now
+                  </button>
+                ) : (
+                  <p
+                    style={{
+                      color: MUTED,
+                      fontSize: "13px",
+                      textAlign: "center",
+                    }}
+                  >
+                    No pending payments.
+                  </p>
+                )}
+              </SectionCard>
+            </div>
           </div>
         </main>
 
