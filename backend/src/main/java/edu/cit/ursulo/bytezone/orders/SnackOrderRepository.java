@@ -9,4 +9,6 @@ public interface SnackOrderRepository extends JpaRepository<SnackOrder, Long> {
     List<SnackOrder> findByUserIdOrderByCreatedAtDesc(Long userId);
 
     List<SnackOrder> findAllByOrderByCreatedAtDesc();
+
+    long countByUserId(Long userId);
 }

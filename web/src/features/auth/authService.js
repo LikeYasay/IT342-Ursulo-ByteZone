@@ -32,3 +32,8 @@ export const uploadMyProfileImage = async (file) => {
 
   return response.data;
 };
+
+export const updateMyProfile = async (payload) => {
+  const response = await api.put("/api/user/me", payload);
+  return response.data;
+};

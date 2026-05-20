@@ -1,6 +1,7 @@
 package edu.cit.ursulo.bytezone.payments;
 
 import edu.cit.ursulo.bytezone.auth.CurrentUserService;
+import edu.cit.ursulo.bytezone.shared.EmailService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import edu.cit.ursulo.bytezone.notifications.NotificationService;
@@ -15,13 +16,16 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final CurrentUserService currentUserService;
     private final NotificationService notificationService;
+    private final EmailService emailService;
 
     public PaymentService(PaymentRepository paymentRepository,
                       CurrentUserService currentUserService,
-                      NotificationService notificationService) {
+                      NotificationService notificationService,
+                      EmailService emailService) {
     this.paymentRepository = paymentRepository;
     this.currentUserService = currentUserService;
     this.notificationService = notificationService;
+    this.emailService = emailService;
     }
 
     @Transactional(readOnly = true)
@@ -63,6 +67,12 @@ public class PaymentService {
                 "Payment Confirmed",
                 "Your payment #" + saved.getId() + " has been confirmed.",
                 NotificationType.PAYMENT_UPDATE
+        );
+
+        emailService.sendPaymentConfirmedEmail(
+                saved.getUser().getEmail(),
+                saved.getUser().getFullName(),
+                saved.getId()
         );
 
         return saved;
@@ -127,6 +137,14 @@ public class PaymentService {
                 "Your sandbox payment #" + saved.getId() + " is now " + saved.getStatus() + ".",
                 NotificationType.PAYMENT_UPDATE
         );
+
+        if (resultStatus == PaymentStatus.PAID) {
+            emailService.sendPaymentConfirmedEmail(
+                    saved.getUser().getEmail(),
+                    saved.getUser().getFullName(),
+                    saved.getId()
+            );
+        }
 
         return saved;
     }

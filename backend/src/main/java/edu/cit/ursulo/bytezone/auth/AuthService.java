@@ -1,6 +1,7 @@
 package edu.cit.ursulo.bytezone.auth;
 
 import edu.cit.ursulo.bytezone.security.JwtService;
+import edu.cit.ursulo.bytezone.shared.EmailService;
 import edu.cit.ursulo.bytezone.users.Role;
 import edu.cit.ursulo.bytezone.users.User;
 import edu.cit.ursulo.bytezone.users.UserRepository;
@@ -17,15 +18,18 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final EmailService emailService;
 
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        JwtService jwtService,
-                       AuthenticationManager authenticationManager) {
+                       AuthenticationManager authenticationManager,
+                       EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
+        this.emailService = emailService;
     }
 
     public AuthResponse register(RegisterRequest request) {
@@ -46,6 +50,8 @@ public class AuthService {
         User savedUser = userRepository.save(user);
 
         String token = jwtService.generateToken(savedUser.getEmail());
+
+        emailService.sendRegistrationEmail(savedUser.getEmail(), savedUser.getFullName());
 
         return new AuthResponse(
                 token,

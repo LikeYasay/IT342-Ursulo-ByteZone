@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import edu.cit.ursulo.bytezone.payments.PaymentMethod;
 import edu.cit.ursulo.bytezone.notifications.NotificationService;
 import edu.cit.ursulo.bytezone.notifications.NotificationType;
+import edu.cit.ursulo.bytezone.shared.EmailService;
 
 
 import java.math.BigDecimal;
@@ -30,19 +31,22 @@ public class OrderService {
     private final PaymentRepository paymentRepository;
     private final CurrentUserService currentUserService;
     private final NotificationService notificationService;
+    private final EmailService emailService;
 
 public OrderService(SnackOrderRepository snackOrderRepository,
                     SnackRepository snackRepository,
                     StationRepository stationRepository,
                     PaymentRepository paymentRepository,
                     CurrentUserService currentUserService,
-                    NotificationService notificationService) {
+                    NotificationService notificationService,
+                    EmailService emailService) {
         this.snackOrderRepository = snackOrderRepository;
         this.snackRepository = snackRepository;
         this.stationRepository = stationRepository;
         this.paymentRepository = paymentRepository;
         this.currentUserService = currentUserService;
         this.notificationService = notificationService;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -121,6 +125,14 @@ public OrderService(SnackOrderRepository snackOrderRepository,
                 "Your order #" + saved.getId() + " is now " + saved.getStatus() + ".",
                 NotificationType.ORDER_UPDATE
         );
+
+        if (saved.getStatus() == OrderStatus.READY) {
+            emailService.sendOrderReadyEmail(
+                    saved.getUser().getEmail(),
+                    saved.getUser().getFullName(),
+                    saved.getId()
+            );
+        }
 
         return saved;
     }

@@ -3,6 +3,7 @@ package edu.cit.ursulo.bytezone.users;
 import edu.cit.ursulo.bytezone.auth.CurrentUserService;
 import edu.cit.ursulo.bytezone.auth.MeResponse;
 import edu.cit.ursulo.bytezone.shared.ApiResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,9 +12,12 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final CurrentUserService currentUserService;
+    private final UserService userService;
 
-    public UserController(CurrentUserService currentUserService) {
+    public UserController(CurrentUserService currentUserService,
+                          UserService userService) {
         this.currentUserService = currentUserService;
+        this.userService = userService;
     }
 
     @GetMapping("/me")
@@ -30,5 +34,23 @@ public class UserController {
     );
 
         return ResponseEntity.ok(ApiResponse.success(response, "Current user fetched successfully"));
+    }
+
+    @PutMapping("/user/me")
+    public ResponseEntity<ApiResponse<MeResponse>> updateProfile(
+            @Valid @RequestBody ProfileUpdateRequest request
+    ) {
+        User updated = userService.updateMyProfile(request);
+
+        MeResponse response = new MeResponse(
+                updated.getId(),
+                updated.getFullName(),
+                updated.getEmail(),
+                updated.getRole().name(),
+                updated.getTournamentWins(),
+                updated.getProfileImageUrl()
+        );
+
+        return ResponseEntity.ok(ApiResponse.success(response, "Profile updated successfully"));
     }
 }

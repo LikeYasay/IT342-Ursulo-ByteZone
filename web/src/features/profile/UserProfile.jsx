@@ -4,6 +4,7 @@ import {
   getCurrentUser,
   logoutUser,
   uploadMyProfileImage,
+  updateMyProfile,
 } from "../auth/authService";
 import NotificationBell from "../notifications/NotificationBell.jsx";
 
@@ -30,6 +31,7 @@ export default function UserProfile() {
   });
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -117,10 +119,41 @@ export default function UserProfile() {
     }
   };
 
-  const handleUpdate = () => {
-    setMessage(
-      "Profile update UI is ready. Backend update/save will be connected next."
-    );
+  const handleUpdate = async () => {
+    if (!form.fullName.trim()) {
+      setError("Full name is required.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError("");
+      setMessage("");
+
+      const payload = {};
+      if (form.fullName.trim()) payload.fullName = form.fullName.trim();
+      if (form.email.trim()) payload.email = form.email.trim();
+      if (form.password.trim()) payload.password = form.password;
+
+      const response = await updateMyProfile(payload);
+      const updatedUser = response.data;
+
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      setForm((prev) => ({
+        ...prev,
+        fullName: updatedUser.fullName || prev.fullName,
+        email: updatedUser.email || prev.email,
+        password: "",
+      }));
+
+      setMessage("Profile updated successfully!");
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to update profile.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const displayName = user?.fullName || "Player";
@@ -467,19 +500,20 @@ export default function UserProfile() {
               >
                 <button
                   onClick={handleUpdate}
+                  disabled={saving || uploading}
                   style={{
                     padding: "10px 24px",
                     borderRadius: "10px",
                     border: "none",
-                    background: CYAN,
+                    background: saving ? "#555" : CYAN,
                     color: "#000",
                     fontWeight: 900,
-                    cursor: "pointer",
+                    cursor: saving ? "not-allowed" : "pointer",
                     boxShadow: "0 0 18px rgba(57,213,255,0.25)",
                     fontFamily: "'Montserrat', sans-serif",
                   }}
                 >
-                  Update
+                  {saving ? "Saving..." : "Update"}
                 </button>
               </div>
             </div>

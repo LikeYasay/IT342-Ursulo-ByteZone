@@ -1,5 +1,7 @@
 package edu.cit.ursulo.bytezone.users;
 
+import edu.cit.ursulo.bytezone.auth.CurrentUserService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -9,9 +11,15 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final CurrentUserService currentUserService;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository,
+                       PasswordEncoder passwordEncoder,
+                       CurrentUserService currentUserService) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.currentUserService = currentUserService;
     }
 
     @Transactional(readOnly = true)
@@ -25,7 +33,7 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (request.getFullName() != null && !request.getFullName().isBlank()) {
-            user.setFullName(request.getFullName());
+            user.setFullName(request.getFullName().trim());
         }
 
         if (request.getRole() != null) {
@@ -34,6 +42,33 @@ public class UserService {
 
         if (request.getTournamentWins() != null) {
             user.setTournamentWins(request.getTournamentWins());
+        }
+
+        return userRepository.save(user);
+    }
+
+    @Transactional
+    public User updateMyProfile(ProfileUpdateRequest request) {
+        User user = currentUserService.getCurrentUser();
+
+        if (request.getFullName() != null && !request.getFullName().isBlank()) {
+            user.setFullName(request.getFullName().trim());
+        }
+
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
+            String newEmail = request.getEmail().trim().toLowerCase();
+
+            if (!newEmail.equalsIgnoreCase(user.getEmail())) {
+                if (userRepository.existsByEmail(newEmail)) {
+                    throw new RuntimeException("Email is already in use by another account");
+                }
+
+                user.setEmail(newEmail);
+            }
+        }
+
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
 
         return userRepository.save(user);
