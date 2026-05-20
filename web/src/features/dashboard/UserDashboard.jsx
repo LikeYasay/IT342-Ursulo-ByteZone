@@ -19,6 +19,33 @@ function getUserImageUrl(user) {
   return user?.profileImageUrl || user?.profile_image_url || "";
 }
 
+function formatDisplayDate(value, fallback = "N/A") {
+  if (!value) return fallback;
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return fallback;
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatMemberSince(value) {
+  if (!value) return "N/A";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "N/A";
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    year: "numeric",
+  });
+}
+
 const GAMES = [
   {
     name: "Valorant",
@@ -246,6 +273,7 @@ export default function UserDashboard() {
 
       setUser(userRes.data);
       localStorage.setItem("user", JSON.stringify(userRes.data));
+
       setReservations(reservationRes.data || []);
       setOrders(orderRes.data || []);
       setPayments(paymentRes.data || []);
@@ -277,8 +305,10 @@ export default function UserDashboard() {
     : reservations.find((reservation) =>
         activeReservationStatuses.includes(reservation.status),
       );
+
   const latestOrder = orders[0];
   const latestPayment = payments[0];
+
   const unpaidPayments = payments.filter(
     (payment) =>
       payment.status === "INITIATED" ||
@@ -287,7 +317,6 @@ export default function UserDashboard() {
   );
 
   const latestUnpaidPayment = unpaidPayments[0];
-
   const pendingPayments = unpaidPayments.length;
 
   const updates = useMemo(() => {
@@ -335,12 +364,17 @@ export default function UserDashboard() {
   const lastPlayed = "N/A";
   const favoriteGame = "N/A";
 
-  const memberSince = user?.createdAt
-    ? new Date(user.createdAt).toLocaleDateString("en-US", {
-        month: "short",
-        year: "numeric",
-      })
-    : "N/A";
+  const memberSince = formatMemberSince(user?.createdAt);
+
+  const latestActivityDate =
+    activeSession?.startTime ||
+    activeSession?.createdAt ||
+    latestOrder?.createdAt ||
+    latestPayment?.createdAt ||
+    latestReservation?.createdAt ||
+    user?.createdAt;
+
+  const lastVisit = formatDisplayDate(latestActivityDate);
 
   const currentStation =
     activeSession?.station?.stationNo ||
@@ -473,6 +507,7 @@ export default function UserDashboard() {
             </span>
 
             <NotificationBell />
+
             <button
               onClick={() => navigate("/profile")}
               title="View Profile"
@@ -842,12 +877,16 @@ export default function UserDashboard() {
                 textAlign: "center",
               }}
             >
-              <div
+              <button
+                onClick={() => navigate("/profile")}
+                title="View Profile"
                 style={{
                   width: "80px",
                   height: "80px",
                   borderRadius: "50%",
-                  background: `linear-gradient(135deg, ${CYAN}, #0070a8)`,
+                  background: profileImageUrl
+                    ? "#111"
+                    : `linear-gradient(135deg, ${CYAN}, #0070a8)`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -857,10 +896,26 @@ export default function UserDashboard() {
                   margin: "0 auto 14px",
                   border: `3px solid ${CYAN}`,
                   boxShadow: `0 0 24px rgba(57,213,255,0.35)`,
+                  overflow: "hidden",
+                  padding: 0,
+                  cursor: "pointer",
+                  fontFamily: "'Montserrat', sans-serif",
                 }}
               >
-                {displayInitial}
-              </div>
+                {profileImageUrl ? (
+                  <img
+                    src={profileImageUrl}
+                    alt="Profile"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                ) : (
+                  displayInitial
+                )}
+              </button>
 
               <div
                 style={{
@@ -895,7 +950,7 @@ export default function UserDashboard() {
               >
                 {[
                   ["Member Since", memberSince],
-                  ["Last Visit", "N/A"],
+                  ["Last Visit", lastVisit],
                 ].map(([key, val]) => (
                   <div
                     key={key}

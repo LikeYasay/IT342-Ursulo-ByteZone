@@ -24,16 +24,11 @@ public class UserController {
     public ResponseEntity<ApiResponse<MeResponse>> me() {
         User user = currentUserService.getCurrentUser();
 
-        MeResponse response = new MeResponse(
-        user.getId(),
-        user.getFullName(),
-        user.getEmail(),
-        user.getRole().name(),
-        user.getTournamentWins(),
-        user.getProfileImageUrl()
-    );
+        MeResponse response = mapToMeResponse(user);
 
-        return ResponseEntity.ok(ApiResponse.success(response, "Current user fetched successfully"));
+        return ResponseEntity.ok(
+                ApiResponse.success(response, "Current user fetched successfully")
+        );
     }
 
     @PutMapping("/user/me")
@@ -42,15 +37,22 @@ public class UserController {
     ) {
         User updated = userService.updateMyProfile(request);
 
-        MeResponse response = new MeResponse(
-                updated.getId(),
-                updated.getFullName(),
-                updated.getEmail(),
-                updated.getRole().name(),
-                updated.getTournamentWins(),
-                updated.getProfileImageUrl()
-        );
+        MeResponse response = mapToMeResponse(updated);
 
-        return ResponseEntity.ok(ApiResponse.success(response, "Profile updated successfully"));
+        return ResponseEntity.ok(
+                ApiResponse.success(response, "Profile updated successfully")
+        );
+    }
+
+    private MeResponse mapToMeResponse(User user) {
+        return new MeResponse(
+                user.getId(),
+                user.getFullName(),
+                user.getEmail(),
+                user.getRole().name(),
+                user.getTournamentWins(),
+                user.getProfileImageUrl(),
+                user.getCreatedAt()
+        );
     }
 }

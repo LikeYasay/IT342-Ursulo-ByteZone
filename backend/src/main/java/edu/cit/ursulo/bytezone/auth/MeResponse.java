@@ -1,5 +1,7 @@
 package edu.cit.ursulo.bytezone.auth;
 
+import java.time.LocalDateTime;
+
 public class MeResponse {
 
     private Long id;
@@ -8,17 +10,25 @@ public class MeResponse {
     private String role;
     private Integer tournamentWins;
     private String profileImageUrl;
+    private LocalDateTime createdAt;
 
     public MeResponse() {
     }
 
-    public MeResponse(Long id, String fullName, String email, String role, Integer tournamentWins, String profileImageUrl) {
+    public MeResponse(Long id,
+                      String fullName,
+                      String email,
+                      String role,
+                      Integer tournamentWins,
+                      String profileImageUrl,
+                      LocalDateTime createdAt) {
         this.id = id;
         this.fullName = fullName;
         this.email = email;
         this.role = role;
         this.tournamentWins = tournamentWins;
         this.profileImageUrl = profileImageUrl;
+        this.createdAt = createdAt;
     }
 
     public Long getId() {
@@ -45,6 +55,10 @@ public class MeResponse {
         return profileImageUrl;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -67,5 +81,9 @@ public class MeResponse {
 
     public void setProfileImageUrl(String profileImageUrl) {
         this.profileImageUrl = profileImageUrl;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }
