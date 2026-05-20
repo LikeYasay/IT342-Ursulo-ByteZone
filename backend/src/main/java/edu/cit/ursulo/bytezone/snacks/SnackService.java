@@ -1,7 +1,9 @@
 package edu.cit.ursulo.bytezone.snacks;
 
+import edu.cit.ursulo.bytezone.uploads.CloudinaryUploadService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -9,9 +11,12 @@ import java.util.List;
 public class SnackService {
 
     private final SnackRepository snackRepository;
+    private final CloudinaryUploadService cloudinaryUploadService;
 
-    public SnackService(SnackRepository snackRepository) {
+    public SnackService(SnackRepository snackRepository,
+                        CloudinaryUploadService cloudinaryUploadService) {
         this.snackRepository = snackRepository;
+        this.cloudinaryUploadService = cloudinaryUploadService;
     }
 
     @Transactional(readOnly = true)
@@ -48,5 +53,16 @@ public class SnackService {
         }
 
         snackRepository.deleteById(snackId);
+    }
+
+    @Transactional
+    public Snack updateImage(Long snackId, MultipartFile file) {
+        Snack snack = snackRepository.findById(snackId)
+                .orElseThrow(() -> new RuntimeException("Snack not found"));
+
+        String imageUrl = cloudinaryUploadService.uploadImage(file, "bytezone/snacks");
+        snack.setImageUrl(imageUrl);
+
+        return snackRepository.save(snack);
     }
 }

@@ -54,9 +54,25 @@ function FoodCard({ item, qty, onAdd, onRemove }) {
           justifyContent: "center",
           fontSize: "56px",
           position: "relative",
+          overflow: "hidden",
         }}
       >
-        {item.emoji || "🍔"}
+        {item.imageUrl ? (
+          <img
+            src={item.imageUrl}
+            alt={item.name}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              position: "absolute",
+              inset: 0,
+              opacity: 0.92,
+            }}
+          />
+        ) : (
+          item.emoji || "🍔"
+        )}
         {qty > 0 && (
           <div
             style={{
@@ -367,6 +383,7 @@ export default function Order() {
         ...item,
         available: item.available ?? item.isAvailable ?? true,
         emoji: getEmoji(item.name),
+        // imageUrl already present from backend; emoji is fallback
       }));
 
       setSnacks(mappedSnacks);

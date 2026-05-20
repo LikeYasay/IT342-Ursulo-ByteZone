@@ -3,9 +3,11 @@ package edu.cit.ursulo.bytezone.snacks;
 import edu.cit.ursulo.bytezone.shared.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/admin/snacks")
@@ -42,6 +44,19 @@ public class AdminSnackController {
 
         return ResponseEntity.ok(
                 ApiResponse.success(null, "Snack deleted successfully")
+        );
+    }
+
+    @PutMapping(
+            value = "/{snackId}/image",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<ApiResponse<Snack>> uploadSnackImage(
+            @PathVariable Long snackId,
+            @RequestParam("file") MultipartFile file
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.success(snackService.updateImage(snackId, file), "Snack image uploaded successfully")
         );
     }
 }

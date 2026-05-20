@@ -22,6 +22,9 @@ public class Snack {
     @Column(nullable = false)
     private Boolean available;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
     public Snack() {
     }
 
@@ -68,5 +71,13 @@ public class Snack {
 
     public void setAvailable(Boolean available) {
         this.available = available;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 }

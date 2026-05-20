@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AdminLayout from "./components/AdminLayout.jsx";
 import {
   createSnack,
   deleteSnack,
   getSnacks,
   updateSnack,
+  uploadSnackImage,
 } from "../orders/orderService";
 
 const CYAN = "#39d5ff";
@@ -21,7 +22,10 @@ export default function AdminSnacks() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(null); // snack id currently being uploaded
   const [error, setError] = useState("");
+  const fileInputRef = useRef(null);
+  const uploadingSnackIdRef = useRef(null);
 
   useEffect(() => {
     loadSnacks();
@@ -124,8 +128,40 @@ export default function AdminSnacks() {
     }
   };
 
+  const triggerImageUpload = (snackId) => {
+    uploadingSnackIdRef.current = snackId;
+    fileInputRef.current.click();
+  };
+
+  const handleImageFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    // reset so the same file can be re-selected next time
+    e.target.value = "";
+
+    const snackId = uploadingSnackIdRef.current;
+    try {
+      setUploading(snackId);
+      setError("");
+      await uploadSnackImage(snackId, file);
+      await loadSnacks();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to upload snack image.");
+    } finally {
+      setUploading(null);
+    }
+  };
+
   return (
     <AdminLayout title="Snacks">
+      {/* Hidden file input for snack image uploads */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: "none" }}
+        onChange={handleImageFileChange}
+      />
       <div
         style={{
           background: "#111",
@@ -246,7 +282,7 @@ export default function AdminSnacks() {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
             <thead>
               <tr style={{ background: "#111" }}>
-                {["ID", "Name", "Price", "Availability", "Actions"].map((header) => (
+        {["ID", "Image", "Name", "Price", "Availability", "Actions"].map((header) => (
                   <th key={header} style={thStyle}>
                     {header}
                   </th>
@@ -265,6 +301,37 @@ export default function AdminSnacks() {
                 filteredSnacks.map((snack) => (
                   <tr key={snack.id} style={{ borderBottom: "1px solid #222" }}>
                     <td style={tdStyle}>#{snack.id}</td>
+                    <td style={{ ...tdStyle, width: "72px" }}>
+                      {snack.imageUrl ? (
+                        <img
+                          src={snack.imageUrl}
+                          alt={snack.name}
+                          style={{
+                            width: "52px",
+                            height: "52px",
+                            objectFit: "cover",
+                            borderRadius: "8px",
+                            border: "1px solid #333",
+                          }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: "52px",
+                            height: "52px",
+                            borderRadius: "8px",
+                            background: "#1a1a1a",
+                            border: "1px solid #333",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "22px",
+                          }}
+                        >
+                          🍽️
+                        </div>
+                      )}
+                    </td>
                     <td style={tdStyle}>
                       <strong style={{ color: "#fff" }}>{snack.name}</strong>
                     </td>
@@ -290,6 +357,14 @@ export default function AdminSnacks() {
                           style={actionButtonStyle(CYAN)}
                         >
                           Edit
+                        </button>
+
+                        <button
+                          disabled={saving || uploading === snack.id}
+                          onClick={() => triggerImageUpload(snack.id)}
+                          style={actionButtonStyle("#7c3aed")}
+                        >
+                          {uploading === snack.id ? "Uploading..." : "Upload Img"}
                         </button>
 
                         <button
