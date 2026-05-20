@@ -19,6 +19,7 @@ import AdminReservations from "./features/admin/AdminReservations.jsx";
 import UserTransactionHistory from "./features/payments/UserTransactionHistory.jsx";
 import AdminStations from "./features/admin/AdminStations.jsx";
 import UserProfile from "./features/profile/UserProfile.jsx";
+import FileUploadPage from "./features/uploads/FileUploadPage.jsx";
 
 function App() {
   return (
@@ -165,6 +166,14 @@ function App() {
         element={
           <RoleProtectedRoute allowedRoles={["USER"]}>
             <UserProfile />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/files"
+        element={
+          <RoleProtectedRoute allowedRoles={["USER", "ADMIN", "STAFF"]}>
+            <FileUploadPage />
           </RoleProtectedRoute>
         }
       />

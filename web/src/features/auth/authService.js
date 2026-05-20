@@ -37,3 +37,11 @@ export const updateMyProfile = async (payload) => {
   const response = await api.put("/api/user/me", payload);
   return response.data;
 };
+
+export const googleLoginUser = async (googleIdToken) => {
+  const response = await api.post("/api/auth/google", {
+    googleIdToken,
+  });
+
+  return response.data;
+};

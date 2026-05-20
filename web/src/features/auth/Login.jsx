@@ -1,7 +1,7 @@
 import { getRedirectPathByRole } from "./authRedirect";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginUser } from "./authService";
+import { googleLoginUser, loginUser } from "./authService";
 import PublicNavbar from "../../shared/components/PublicNavbar";
 
 const CYAN = "#39d5ff";
@@ -13,11 +13,93 @@ const INPUT_BORDER = "#2a2a2a";
 
 export default function ByteZoneLogin() {
   const navigate = useNavigate();
+  const googleButtonRef = useRef(null);
+
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPass, setShowPass] = useState(false);
   const [focused, setFocused] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+
+  useEffect(() => {
+    if (!googleClientId) return;
+
+    const loadGoogleScript = () => {
+      if (window.google?.accounts?.id) {
+        initializeGoogleButton();
+        return;
+      }
+
+      const existingScript = document.querySelector(
+        'script[src="https://accounts.google.com/gsi/client"]'
+      );
+
+      if (existingScript) {
+        existingScript.addEventListener("load", initializeGoogleButton);
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.defer = true;
+      script.onload = initializeGoogleButton;
+      document.body.appendChild(script);
+    };
+
+    loadGoogleScript();
+  }, [googleClientId]);
+
+  const initializeGoogleButton = () => {
+    if (!googleClientId || !window.google?.accounts?.id || !googleButtonRef.current) {
+      return;
+    }
+
+    window.google.accounts.id.initialize({
+      client_id: googleClientId,
+      callback: handleGoogleCredential,
+    });
+
+    googleButtonRef.current.innerHTML = "";
+
+    window.google.accounts.id.renderButton(googleButtonRef.current, {
+      theme: "filled_black",
+      size: "large",
+      width: 360,
+      text: "signin_with",
+      shape: "pill",
+    });
+  };
+
+  const handleGoogleCredential = async (credentialResponse) => {
+    if (!credentialResponse?.credential) {
+      setError("Google login failed. No credential was returned.");
+      return;
+    }
+
+    try {
+      setGoogleLoading(true);
+      setError("");
+
+      const response = await googleLoginUser(credentialResponse.credential);
+
+      localStorage.setItem("token", response.accessToken);
+      localStorage.setItem("user", JSON.stringify(response.user));
+
+      navigate(getRedirectPathByRole(response.user?.role));
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          "Google login failed. Check GOOGLE_CLIENT_ID setup."
+      );
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -34,13 +116,13 @@ export default function ByteZoneLogin() {
     try {
       setLoading(true);
 
-    const response = await loginUser({
-      email: form.email,
-      password: form.password,
-    });
+      const response = await loginUser({
+        email: form.email,
+        password: form.password,
+      });
 
-    localStorage.setItem("token", response.accessToken);
-    localStorage.setItem("user", JSON.stringify(response.user));
+      localStorage.setItem("token", response.accessToken);
+      localStorage.setItem("user", JSON.stringify(response.user));
 
       navigate(getRedirectPathByRole(response.user?.role));
     } catch (err) {
@@ -229,6 +311,65 @@ export default function ByteZoneLogin() {
                 {loading ? "Signing in..." : "Sign In"}
               </button>
             </form>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                margin: "24px 0",
+              }}
+            >
+              <div style={{ flex: 1, height: "1px", background: "#222" }} />
+              <span style={{ color: MUTED, fontSize: "12px", fontWeight: 700 }}>
+                OR
+              </span>
+              <div style={{ flex: 1, height: "1px", background: "#222" }} />
+            </div>
+
+            {googleClientId ? (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  opacity: googleLoading ? 0.65 : 1,
+                  pointerEvents: googleLoading ? "none" : "auto",
+                }}
+              >
+                <div ref={googleButtonRef} />
+              </div>
+            ) : (
+              <div
+                style={{
+                  border: "1px solid #333",
+                  borderRadius: "12px",
+                  padding: "12px",
+                  color: MUTED,
+                  fontSize: "12px",
+                  textAlign: "center",
+                  lineHeight: 1.5,
+                }}
+              >
+                Google Login is ready, but VITE_GOOGLE_CLIENT_ID is not set.
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => navigate("/register")}
+              style={{
+                marginTop: "22px",
+                width: "100%",
+                background: "transparent",
+                border: "none",
+                color: MUTED,
+                cursor: "pointer",
+                fontSize: "13px",
+                fontFamily: "'Montserrat', sans-serif",
+              }}
+            >
+              No account yet? <span style={{ color: CYAN }}>Create one</span>
+            </button>
           </div>
         </div>
       </div>

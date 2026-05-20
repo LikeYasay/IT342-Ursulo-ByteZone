@@ -7,6 +7,7 @@ import { getMyPayments } from "../payments/paymentService";
 import NotificationBell from "../notifications/NotificationBell.jsx";
 import { getAnnouncements } from "../announcements/announcementService";
 import { getMyActiveSession } from "../sessions/sessionService";
+import { getGamingHighlights } from "../publicApi/publicApiService";
 
 const CYAN = "#39d5ff";
 const DARK_BG = "#000000";
@@ -51,31 +52,37 @@ const GAMES = [
     name: "Valorant",
     image:
       "https://www.riotgames.com/darkroom/1440/8d5c497da1c2eeec8cffa99b01abc64b:5329ca773963a5b739e98e715957ab39/ps-f2p-val-console-launch-16x9.jpg",
-  },
-  {
-    name: "League of Legends",
-    image:
-      "https://static.wikia.nocookie.net/leagueoflegends/images/7/7b/League_of_Legends_Cover.jpg/revision/latest/scale-to-width-down/1200?cb=20191018222445",
+    source: "Static",
   },
   {
     name: "Counter-Strike: Global Offensive (CS:GO)",
     image:
       "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/730/capsule_616x353.jpg?t=1749053861",
+    source: "Static",
+  },
+  {
+    name: "League of Legends",
+    image:
+      "https://static.wikia.nocookie.net/leagueoflegends/images/7/7b/League_of_Legends_Cover.jpg/revision/latest/scale-to-width-down/1200?cb=20191018222445",
+    source: "Static",
   },
   {
     name: "Apex Legends",
     image:
       "https://www.nintendo.com/eu/media/images/assets/nintendo_switch_2_games/apexlegends_1/16x9_ApexLegends_image1600w.jpg",
+    source: "Static",
   },
   {
     name: "Fortnite",
     image:
       "https://dropinblog.net/34253310/files/featured/imagem-2024-09-26-103919931.png",
+    source: "Static",
   },
   {
     name: "Dota 2",
     image:
       "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/570/capsule_616x353.jpg?t=1769535998",
+    source: "Static",
   },
 ];
 
@@ -230,10 +237,9 @@ export default function UserDashboard() {
   const [error, setError] = useState("");
   const [activeSession, setActiveSession] = useState(null);
   const [remainingTime, setRemainingTime] = useState("00:00:00");
+  const [apiGames, setApiGames] = useState([]);
 
   const visibleGames = 4;
-  const canPrev = gameIdx > 0;
-  const canNext = gameIdx + visibleGames < GAMES.length;
 
   useEffect(() => {
     loadDashboard();
@@ -282,6 +288,24 @@ export default function UserDashboard() {
     } catch (err) {
       setError(err.response?.data?.message || "Failed to load dashboard.");
     }
+
+    try {
+      const publicApiRes = await getGamingHighlights();
+
+      const fetchedGames = (publicApiRes.data || [])
+        .filter((game) => game?.name && game?.background)
+        .map((game) => ({
+          name: game.name,
+          image: game.background,
+          rating: game.rating,
+          released: game.released,
+          source: "Public API",
+        }));
+
+      setApiGames(fetchedGames);
+    } catch {
+      setApiGames([]);
+    }
   }
 
   const handleNav = (label) => {
@@ -291,12 +315,36 @@ export default function UserDashboard() {
     if (label === "Book") navigate("/booking");
     if (label === "Order") navigate("/order");
     if (label === "Transactions") navigate("/transactions");
+    if (label === "Files") navigate("/files");
   };
 
   const handleLogout = () => {
     logoutUser();
     navigate("/login");
   };
+
+  const fixedTopGames = GAMES.filter(
+    (game) =>
+      game.name.toLowerCase().includes("valorant") ||
+      game.name.toLowerCase().includes("counter-strike") ||
+      game.name.toLowerCase().includes("cs:go"),
+  );
+
+  const mergedApiGames = apiGames.filter(
+    (apiGame) =>
+      !fixedTopGames.some(
+        (fixedGame) =>
+          fixedGame.name.toLowerCase() === apiGame.name.toLowerCase(),
+      ),
+  );
+
+  const topPickGames =
+    apiGames.length > 0
+      ? [...fixedTopGames, ...mergedApiGames].slice(0, 8)
+      : GAMES;
+
+  const canPrev = gameIdx > 0;
+  const canNext = gameIdx + visibleGames < topPickGames.length;
 
   const activeReservationStatuses = ["PENDING", "APPROVED"];
 
@@ -719,91 +767,132 @@ export default function UserDashboard() {
                   <span style={{ color: "#fff" }}>Top Picks for </span>
                   <span style={{ color: CYAN }}>Gamers</span>
                 </h2>
+                <p
+                  style={{
+                    color: MUTED,
+                    fontSize: "12px",
+                    marginTop: "6px",
+                  }}
+                >
+                  Valorant and CS:GO stay featured, with extra games loaded from the public API when available.
+                </p>
               </div>
 
               <div style={{ position: "relative" }}>
                 <div
                   style={{ display: "flex", gap: "14px", overflow: "hidden" }}
                 >
-                  {GAMES.slice(gameIdx, gameIdx + visibleGames).map((game) => (
-                    <div
-                      key={game.name}
-                      style={{
-                        flex: "0 0 calc(25% - 11px)",
-                        background: CARD_BG,
-                        border: "1px solid #2a2a2a",
-                        borderRadius: "16px",
-                        overflow: "hidden",
-                        transition:
-                          "transform 0.2s, border-color 0.2s, box-shadow 0.2s",
-                        cursor: "pointer",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform =
-                          "translateY(-4px) scale(1.01)";
-                        e.currentTarget.style.borderColor = CYAN;
-                        e.currentTarget.style.boxShadow =
-                          "0 16px 40px rgba(57,213,255,0.10)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "none";
-                        e.currentTarget.style.borderColor = "#2a2a2a";
-                        e.currentTarget.style.boxShadow = "none";
-                      }}
-                    >
+                  {topPickGames
+                    .slice(gameIdx, gameIdx + visibleGames)
+                    .map((game) => (
                       <div
+                        key={game.name}
                         style={{
-                          width: "100%",
-                          height: "180px",
-                          position: "relative",
-                          background: "#0d0d18",
+                          flex: "0 0 calc(25% - 11px)",
+                          background: CARD_BG,
+                          border: "1px solid #2a2a2a",
+                          borderRadius: "16px",
                           overflow: "hidden",
+                          transition:
+                            "transform 0.2s, border-color 0.2s, box-shadow 0.2s",
+                          cursor: "pointer",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform =
+                            "translateY(-4px) scale(1.01)";
+                          e.currentTarget.style.borderColor = CYAN;
+                          e.currentTarget.style.boxShadow =
+                            "0 16px 40px rgba(57,213,255,0.10)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = "none";
+                          e.currentTarget.style.borderColor = "#2a2a2a";
+                          e.currentTarget.style.boxShadow = "none";
                         }}
                       >
-                        <img
-                          src={game.image}
-                          alt={game.name}
+                        <div
                           style={{
                             width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                            display: "block",
-                          }}
-                        />
-
-                        <div
-                          style={{
-                            position: "absolute",
-                            inset: 0,
-                            background:
-                              "linear-gradient(to top, rgba(0,0,0,0.90) 0%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0.05) 100%)",
-                          }}
-                        />
-
-                        <div
-                          style={{
-                            position: "absolute",
-                            left: "14px",
-                            right: "14px",
-                            bottom: "12px",
-                            textAlign: "center",
-                            fontSize: "13px",
-                            fontWeight: 700,
-                            color: "#fff",
-                            lineHeight: 1.4,
-                            textShadow: "0 2px 8px rgba(0,0,0,0.65)",
+                            height: "180px",
+                            position: "relative",
+                            background: "#0d0d18",
+                            overflow: "hidden",
                           }}
                         >
-                          {game.name}
+                          <img
+                            src={game.image}
+                            alt={game.name}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                              display: "block",
+                            }}
+                          />
+
+                          <div
+                            style={{
+                              position: "absolute",
+                              inset: 0,
+                              background:
+                                "linear-gradient(to top, rgba(0,0,0,0.90) 0%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0.05) 100%)",
+                            }}
+                          />
+
+                          {game.source === "Public API" && (
+                            <div
+                              style={{
+                                position: "absolute",
+                                top: "10px",
+                                left: "10px",
+                                padding: "4px 8px",
+                                borderRadius: "999px",
+                                background: "rgba(57,213,255,0.9)",
+                                color: "#000",
+                                fontSize: "10px",
+                                fontWeight: 900,
+                              }}
+                            >
+                              API
+                            </div>
+                          )}
+
+                          <div
+                            style={{
+                              position: "absolute",
+                              left: "14px",
+                              right: "14px",
+                              bottom: "12px",
+                              textAlign: "center",
+                              fontSize: "13px",
+                              fontWeight: 700,
+                              color: "#fff",
+                              lineHeight: 1.4,
+                              textShadow: "0 2px 8px rgba(0,0,0,0.65)",
+                            }}
+                          >
+                            {game.name}
+
+                            {game.rating && (
+                              <div
+                                style={{
+                                  fontSize: "11px",
+                                  color: CYAN,
+                                  marginTop: "4px",
+                                }}
+                              >
+                                Rating: {game.rating}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
 
                 {canPrev && (
                   <button
-                    onClick={() => setGameIdx((i) => i - 1)}
+                    onClick={() => setGameIdx((i) => Math.max(0, i - 1))}
                     style={{
                       position: "absolute",
                       left: "-18px",
@@ -990,6 +1079,11 @@ export default function UserDashboard() {
                     label="Transaction History"
                     icon="💳"
                     onClick={() => navigate("/transactions")}
+                  />
+                  <QuickActionBtn
+                    label="Upload Record File"
+                    icon="📎"
+                    onClick={() => navigate("/files")}
                   />
                   <QuickActionBtn
                     label="View Tournaments"
@@ -1195,6 +1289,7 @@ export default function UserDashboard() {
             {["Home", "Book", "Order", "Transactions"].map((link) => (
               <span
                 key={link}
+                onClick={() => handleNav(link)}
                 style={{
                   fontSize: "14px",
                   color: MUTED,
