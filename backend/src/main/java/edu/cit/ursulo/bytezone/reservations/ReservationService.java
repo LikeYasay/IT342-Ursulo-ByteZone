@@ -3,6 +3,11 @@ package edu.cit.ursulo.bytezone.reservations;
 import edu.cit.ursulo.bytezone.auth.CurrentUserService;
 import edu.cit.ursulo.bytezone.notifications.NotificationService;
 import edu.cit.ursulo.bytezone.notifications.NotificationType;
+import edu.cit.ursulo.bytezone.payments.Payment;
+import edu.cit.ursulo.bytezone.payments.PaymentMethod;
+import edu.cit.ursulo.bytezone.payments.PaymentRepository;
+import edu.cit.ursulo.bytezone.payments.PaymentStatus;
+import edu.cit.ursulo.bytezone.payments.PaymentType;
 import edu.cit.ursulo.bytezone.sessions.CafeSession;
 import edu.cit.ursulo.bytezone.sessions.CafeSessionRepository;
 import edu.cit.ursulo.bytezone.sessions.SessionStatus;
@@ -13,6 +18,7 @@ import edu.cit.ursulo.bytezone.users.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,22 +26,27 @@ import java.util.List;
 @Service
 public class ReservationService {
 
+    private static final BigDecimal RATE_PER_HOUR = new BigDecimal("60.00");
+
     private final ReservationRepository reservationRepository;
     private final StationRepository stationRepository;
     private final CurrentUserService currentUserService;
     private final NotificationService notificationService;
     private final CafeSessionRepository cafeSessionRepository;
+    private final PaymentRepository paymentRepository;
 
     public ReservationService(ReservationRepository reservationRepository,
                               StationRepository stationRepository,
                               CurrentUserService currentUserService,
                               NotificationService notificationService,
-                              CafeSessionRepository cafeSessionRepository) {
+                              CafeSessionRepository cafeSessionRepository,
+                              PaymentRepository paymentRepository) {
         this.reservationRepository = reservationRepository;
         this.stationRepository = stationRepository;
         this.currentUserService = currentUserService;
         this.notificationService = notificationService;
         this.cafeSessionRepository = cafeSessionRepository;
+        this.paymentRepository = paymentRepository;
     }
 
     @Transactional
@@ -76,7 +87,34 @@ public class ReservationService {
         reservation.setDurationMinutes(request.getDurationMinutes());
         reservation.setStatus(ReservationStatus.PENDING);
 
-        return reservationRepository.save(reservation);
+        Reservation savedReservation = reservationRepository.save(reservation);
+
+        Payment payment = new Payment();
+        payment.setUser(user);
+        payment.setType(PaymentType.RESERVATION);
+        payment.setReferenceId(savedReservation.getId());
+        payment.setAmount(calculateReservationAmount(request.getDurationMinutes()));
+        payment.setStatus(PaymentStatus.PENDING);
+        payment.setMethod(PaymentMethod.SANDBOX);
+        payment.setReferenceNo("BZ-RES-" + savedReservation.getId());
+
+        paymentRepository.save(payment);
+
+        notificationService.create(
+                savedReservation.getUser(),
+                "Reservation Created",
+                "Your reservation #" + savedReservation.getId() + " was created. Payment is pending confirmation.",
+                NotificationType.RESERVATION_UPDATE
+        );
+
+        return savedReservation;
+    }
+
+    private BigDecimal calculateReservationAmount(Integer durationMinutes) {
+        BigDecimal hours = BigDecimal.valueOf(durationMinutes)
+                .divide(BigDecimal.valueOf(60), 2, java.math.RoundingMode.HALF_UP);
+
+        return RATE_PER_HOUR.multiply(hours);
     }
 
     @Transactional(readOnly = true)

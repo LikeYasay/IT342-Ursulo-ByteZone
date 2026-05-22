@@ -6,6 +6,11 @@ import {
   getStations,
 } from "./bookingService";
 import { getCurrentUser, logoutUser } from "../auth/authService";
+import {
+  getMyPayments,
+  startSandboxPayment,
+  submitSandboxPaymentResult,
+} from "../payments/paymentService";
 
 const CYAN = "#39d5ff";
 const DARK_BG = "#000000";
@@ -103,7 +108,7 @@ function StationCell({ station, onClick }) {
 export default function Booking() {
   const navigate = useNavigate();
   const [user, setUser] = useState(
-    JSON.parse(localStorage.getItem("user") || "{}")
+    JSON.parse(localStorage.getItem("user") || "{}"),
   );
 
   const [activeNav, setActiveNav] = useState("Book");
@@ -122,6 +127,11 @@ export default function Booking() {
   const [error, setError] = useState("");
 
   const navLinks = ["Home", "Book", "Order", "Transactions"];
+
+  const [checkoutPayment, setCheckoutPayment] = useState(null);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutMessage, setCheckoutMessage] = useState("");
 
   useEffect(() => {
     loadBookingData();
@@ -181,6 +191,38 @@ export default function Booking() {
     return found ? found.minutes : 0;
   }, [selectedDuration]);
 
+  async function openReservationCheckout(reservationId) {
+    try {
+      setCheckoutMessage("");
+
+      const paymentsRes = await getMyPayments();
+      const payments = paymentsRes.data || [];
+
+      const payment = payments.find(
+        (p) =>
+          p.type === "RESERVATION" &&
+          Number(p.referenceId) === Number(reservationId) &&
+          ["PENDING", "INITIATED", "PROCESSING"].includes(p.status),
+      );
+
+      if (!payment) {
+        setError(
+          "Reservation was created, but no pending payment was found. Please check your dashboard.",
+        );
+        return;
+      }
+
+      const processingRes = await startSandboxPayment(payment.id);
+      setCheckoutPayment(processingRes.data);
+      setCheckoutOpen(true);
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          "Reservation was created, but checkout could not be opened.",
+      );
+    }
+  }
+
   const handleConfirm = async () => {
     if (
       !selectedStation ||
@@ -195,18 +237,25 @@ export default function Booking() {
     try {
       setSubmitting(true);
       setError("");
+      setCheckoutMessage("");
 
-      await createReservation({
+      const reservationRes = await createReservation({
         stationId: selectedStation,
         date: selectedDate,
         startTime: selectedTime,
         durationMinutes,
       });
 
+      const savedReservation = reservationRes.data;
+
       setConfirmed(true);
       setTimeout(() => setConfirmed(false), 3000);
 
       await loadBookingData();
+
+      if (savedReservation?.id) {
+        await openReservationCheckout(savedReservation.id);
+      }
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -232,6 +281,49 @@ export default function Booking() {
     setShowTimePicker(false);
     setShowDurationPicker(false);
     setError("");
+  };
+
+  const handleSandboxResult = async (status) => {
+    if (!checkoutPayment?.id) return;
+
+    try {
+      setCheckoutLoading(true);
+      setCheckoutMessage("Recording sandbox result...");
+
+      const resultRes = await submitSandboxPaymentResult(checkoutPayment.id, {
+        status,
+        referenceNo: `BZ-SANDBOX-${checkoutPayment.id}`,
+      });
+
+      setCheckoutPayment(resultRes.data);
+
+      if (status === "PAID") {
+        setCheckoutMessage("Payment marked as paid successfully.");
+        setTimeout(() => {
+          setCheckoutOpen(false);
+          setCheckoutPayment(null);
+          setCheckoutMessage("");
+          navigate("/dashboard");
+        }, 1200);
+      } else if (status === "FAILED") {
+        setCheckoutMessage("Sandbox payment failed. You may try again later.");
+      } else if (status === "CANCELLED") {
+        setCheckoutMessage("Sandbox payment cancelled.");
+        setTimeout(() => {
+          setCheckoutOpen(false);
+          setCheckoutPayment(null);
+          setCheckoutMessage("");
+        }, 1000);
+      }
+
+      await loadBookingData();
+    } catch (err) {
+      setCheckoutMessage(
+        err.response?.data?.message || "Failed to record sandbox result.",
+      );
+    } finally {
+      setCheckoutLoading(false);
+    }
   };
 
   const handleNav = (label) => {
@@ -972,6 +1064,177 @@ export default function Booking() {
                     No reservations yet.
                   </div>
                 )}
+                {checkoutOpen && checkoutPayment && (
+                  <div
+                    style={{
+                      position: "fixed",
+                      inset: 0,
+                      background: "rgba(0,0,0,0.78)",
+                      zIndex: 999,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "24px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "min(560px, 100%)",
+                        background: CARD_BG,
+                        border: `1px solid ${CYAN}`,
+                        borderRadius: "18px",
+                        padding: "28px",
+                        boxShadow: "0 24px 80px rgba(0,0,0,0.45)",
+                      }}
+                    >
+                      <h2
+                        style={{
+                          color: CYAN,
+                          fontSize: "24px",
+                          fontWeight: 900,
+                          marginBottom: "10px",
+                        }}
+                      >
+                        ByteZone Sandbox Checkout
+                      </h2>
+
+                      <p
+                        style={{
+                          color: MUTED,
+                          fontSize: "13px",
+                          lineHeight: 1.5,
+                          marginBottom: "22px",
+                        }}
+                      >
+                        This is a simulated payment gateway for project testing
+                        only. No real money will be processed.
+                      </p>
+
+                      <div
+                        style={{
+                          background: "#101010",
+                          borderRadius: "14px",
+                          padding: "18px",
+                          marginBottom: "18px",
+                          border: "1px solid #222",
+                        }}
+                      >
+                        <div style={checkoutRowStyle}>
+                          <span>Payment ID:</span>
+                          <strong>#{checkoutPayment.id}</strong>
+                        </div>
+
+                        <div style={checkoutRowStyle}>
+                          <span>Type:</span>
+                          <strong>{checkoutPayment.type}</strong>
+                        </div>
+
+                        <div style={checkoutRowStyle}>
+                          <span>Amount:</span>
+                          <strong>
+                            ₱{Number(checkoutPayment.amount).toFixed(2)}
+                          </strong>
+                        </div>
+
+                        <div style={checkoutRowStyle}>
+                          <span>Status:</span>
+                          <strong style={{ color: CYAN }}>
+                            {checkoutPayment.status}
+                          </strong>
+                        </div>
+
+                        <div
+                          style={{
+                            marginTop: "18px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <img
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=BYTEZONE-SANDBOX-PAYMENT-${checkoutPayment.id}`}
+                            alt="ByteZone Sandbox QR"
+                            style={{
+                              width: "150px",
+                              height: "150px",
+                              background: "#fff",
+                              border: "8px solid #fff",
+                              borderRadius: "12px",
+                              boxShadow: "0 0 0 1px #333",
+                            }}
+                          />
+                        </div>
+
+                        <p
+                          style={{
+                            color: MUTED,
+                            fontSize: "12px",
+                            textAlign: "center",
+                            marginTop: "10px",
+                          }}
+                        >
+                          Mock QR Sandbox • Reference: BZ-SANDBOX-
+                          {checkoutPayment.id}
+                        </p>
+                      </div>
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr 1fr",
+                          gap: "10px",
+                        }}
+                      >
+                        <button
+                          onClick={() => handleSandboxResult("PAID")}
+                          disabled={checkoutLoading}
+                          style={{
+                            ...checkoutButtonStyle,
+                            background: "#22c55e",
+                          }}
+                        >
+                          Pay Success
+                        </button>
+
+                        <button
+                          onClick={() => handleSandboxResult("FAILED")}
+                          disabled={checkoutLoading}
+                          style={{
+                            ...checkoutButtonStyle,
+                            background: "#ef4444",
+                          }}
+                        >
+                          Fail Payment
+                        </button>
+
+                        <button
+                          onClick={() => handleSandboxResult("CANCELLED")}
+                          disabled={checkoutLoading}
+                          style={{
+                            ...checkoutButtonStyle,
+                            background: "#6b7280",
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+
+                      {checkoutMessage && (
+                        <p
+                          style={{
+                            color: checkoutMessage.includes("successfully")
+                              ? CYAN
+                              : MUTED,
+                            fontSize: "13px",
+                            marginTop: "16px",
+                          }}
+                        >
+                          {checkoutMessage}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -996,6 +1259,26 @@ const pickerButtonStyle = {
   alignItems: "center",
   justifyContent: "space-between",
   cursor: "pointer",
+};
+
+const checkoutRowStyle = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: "12px",
+  color: "#fff",
+  fontSize: "14px",
+  marginBottom: "10px",
+};
+
+const checkoutButtonStyle = {
+  padding: "14px 12px",
+  border: "none",
+  borderRadius: "10px",
+  color: "#fff",
+  fontWeight: 800,
+  fontSize: "14px",
+  cursor: "pointer",
+  fontFamily: "'Montserrat', sans-serif",
 };
 
 const dropdownStyle = {

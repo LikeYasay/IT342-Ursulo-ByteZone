@@ -11,6 +11,12 @@ import {
 const CYAN = "#39d5ff";
 const MUTED = "#8a8f98";
 
+const SNACK_CATEGORIES = [
+  "Recommended Offers",
+  "Noodles & Soups",
+  "Drinks & Beverages",
+];
+
 export default function AdminSnacks() {
   const [snacks, setSnacks] = useState([]);
   const [search, setSearch] = useState("");
@@ -19,6 +25,7 @@ export default function AdminSnacks() {
     name: "",
     price: "",
     available: true,
+    category: "Recommended Offers",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -53,11 +60,13 @@ export default function AdminSnacks() {
     return snacks.filter(
       (snack) =>
         String(snack.id).includes(query) ||
-        String(snack.name || "").toLowerCase().includes(query) ||
+        String(snack.name || "")
+          .toLowerCase()
+          .includes(query) ||
         String(snack.price || "").includes(query) ||
         String(snack.available ? "available" : "unavailable")
           .toLowerCase()
-          .includes(query)
+          .includes(query),
     );
   }, [snacks, search]);
 
@@ -67,6 +76,7 @@ export default function AdminSnacks() {
       name: "",
       price: "",
       available: true,
+      category: "Recommended Offers",
     });
   };
 
@@ -76,6 +86,7 @@ export default function AdminSnacks() {
       name: snack.name || "",
       price: snack.price || "",
       available: Boolean(snack.available),
+      category: snack.category || "Recommended Offers",
     });
   };
 
@@ -93,6 +104,7 @@ export default function AdminSnacks() {
         name: form.name.trim(),
         price: Number(form.price),
         available: Boolean(form.available),
+        category: form.category || "Recommended Offers",
       };
 
       if (editingId) {
@@ -111,7 +123,9 @@ export default function AdminSnacks() {
   };
 
   const removeSnack = async (snackId) => {
-    const confirmed = window.confirm("Are you sure you want to delete this snack?");
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this snack?",
+    );
 
     if (!confirmed) return;
 
@@ -178,7 +192,7 @@ export default function AdminSnacks() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 160px 160px auto auto",
+            gridTemplateColumns: "1fr 160px 200px 160px auto auto",
             gap: "12px",
             alignItems: "center",
           }}
@@ -212,6 +226,23 @@ export default function AdminSnacks() {
           />
 
           <select
+            value={form.category}
+            onChange={(e) =>
+              setForm((prev) => ({
+                ...prev,
+                category: e.target.value,
+              }))
+            }
+            style={inputStyle}
+          >
+            {SNACK_CATEGORIES.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+
+          <select
             value={form.available ? "true" : "false"}
             onChange={(e) =>
               setForm((prev) => ({
@@ -225,7 +256,11 @@ export default function AdminSnacks() {
             <option value="false">Unavailable</option>
           </select>
 
-          <button disabled={saving} onClick={saveSnack} style={primaryButtonStyle}>
+          <button
+            disabled={saving}
+            onClick={saveSnack}
+            style={primaryButtonStyle}
+          >
             {saving ? "Saving..." : editingId ? "Update" : "Add"}
           </button>
 
@@ -270,7 +305,9 @@ export default function AdminSnacks() {
       </div>
 
       {error && (
-        <div style={{ color: "#ff9b9b", marginBottom: "16px", fontWeight: 700 }}>
+        <div
+          style={{ color: "#ff9b9b", marginBottom: "16px", fontWeight: 700 }}
+        >
           {error}
         </div>
       )}
@@ -279,10 +316,24 @@ export default function AdminSnacks() {
         <p style={{ color: MUTED }}>Loading snacks...</p>
       ) : (
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+          <table
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              fontSize: "13px",
+            }}
+          >
             <thead>
               <tr style={{ background: "#111" }}>
-        {["ID", "Image", "Name", "Price", "Availability", "Actions"].map((header) => (
+                {[
+                  "ID",
+                  "Image",
+                  "Name",
+                  "Category",
+                  "Price",
+                  "Availability",
+                  "Actions",
+                ].map((header) => (
                   <th key={header} style={thStyle}>
                     {header}
                   </th>
@@ -293,14 +344,39 @@ export default function AdminSnacks() {
             <tbody>
               {filteredSnacks.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={{ padding: "24px", textAlign: "center", color: MUTED }}>
+                  <td
+                    colSpan="7"
+                    style={{
+                      padding: "24px",
+                      textAlign: "center",
+                      color: MUTED,
+                    }}
+                  >
                     No snacks found.
                   </td>
                 </tr>
               ) : (
                 filteredSnacks.map((snack) => (
                   <tr key={snack.id} style={{ borderBottom: "1px solid #222" }}>
-                    <td style={tdStyle}>#{snack.id}</td>
+                    <td style={tdStyle}>
+                      <strong style={{ color: "#fff" }}>{snack.name}</strong>
+                    </td>
+
+                    <td style={tdStyle}>
+                      <span
+                        style={{
+                          ...pillStyle,
+                          color: CYAN,
+                          background: "rgba(57,213,255,0.12)",
+                        }}
+                      >
+                        {snack.category || "Recommended Offers"}
+                      </span>
+                    </td>
+
+                    <td style={tdStyle}>
+                      ₱{Number(snack.price || 0).toFixed(2)}
+                    </td>
                     <td style={{ ...tdStyle, width: "72px" }}>
                       {snack.imageUrl ? (
                         <img
@@ -335,7 +411,9 @@ export default function AdminSnacks() {
                     <td style={tdStyle}>
                       <strong style={{ color: "#fff" }}>{snack.name}</strong>
                     </td>
-                    <td style={tdStyle}>₱{Number(snack.price || 0).toFixed(2)}</td>
+                    <td style={tdStyle}>
+                      ₱{Number(snack.price || 0).toFixed(2)}
+                    </td>
                     <td style={tdStyle}>
                       <span
                         style={{
@@ -364,7 +442,9 @@ export default function AdminSnacks() {
                           onClick={() => triggerImageUpload(snack.id)}
                           style={actionButtonStyle("#7c3aed")}
                         >
-                          {uploading === snack.id ? "Uploading..." : "Upload Img"}
+                          {uploading === snack.id
+                            ? "Uploading..."
+                            : "Upload Img"}
                         </button>
 
                         <button

@@ -25,6 +25,9 @@ public class Snack {
     @Column(name = "image_url")
     private String imageUrl;
 
+    @Column(nullable = false)
+    private String category;
+
     public Snack() {
     }
 
@@ -32,12 +35,25 @@ public class Snack {
         this.name = name;
         this.price = price;
         this.available = available;
+        this.category = "Recommended Offers";
+    }
+
+    public Snack(String name, BigDecimal price, Boolean available, String imageUrl, String category) {
+        this.name = name;
+        this.price = price;
+        this.available = available;
+        this.imageUrl = imageUrl;
+        this.category = category;
     }
 
     @PrePersist
     public void prePersist() {
         if (this.available == null) {
             this.available = true;
+        }
+
+        if (this.category == null || this.category.isBlank()) {
+            this.category = "Recommended Offers";
         }
     }
 
@@ -57,6 +73,14 @@ public class Snack {
         return available;
     }
 
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -73,11 +97,11 @@ public class Snack {
         this.available = available;
     }
 
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
     }
 }

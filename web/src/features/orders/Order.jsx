@@ -2,7 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getSnacks, createOrder, getMyOrders } from "./orderService";
 import { getStations } from "../booking/bookingService";
-import { getMyPayments } from "../payments/paymentService";
+import {
+  getMyPayments,
+  startSandboxPayment,
+  submitSandboxPaymentResult,
+} from "../payments/paymentService";
 import { getCurrentUser, logoutUser } from "../auth/authService";
 
 const CYAN = "#39d5ff";
@@ -16,6 +20,26 @@ function getUserImageUrl(user) {
 }
 
 const ITEMS_VISIBLE = 4;
+
+const checkoutRowStyle = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: "12px",
+  color: "#fff",
+  fontSize: "14px",
+  marginBottom: "10px",
+};
+
+const checkoutButtonStyle = {
+  padding: "14px 12px",
+  border: "none",
+  borderRadius: "10px",
+  color: "#fff",
+  fontWeight: 800,
+  fontSize: "14px",
+  cursor: "pointer",
+  fontFamily: "'Montserrat', sans-serif",
+};
 
 function FoodCard({ item, qty, onAdd, onRemove }) {
   const [hovered, setHovered] = useState(false);
@@ -317,10 +341,14 @@ function groupSnacks(snacks) {
     "Drinks & Beverages": [],
   };
 
-  snacks.forEach((item, index) => {
-    if (index < 6) groups["Recommended Offers"].push(item);
-    else if (index < 12) groups["Noodles & Soups"].push(item);
-    else groups["Drinks & Beverages"].push(item);
+  snacks.forEach((item) => {
+    const category = item.category || "Recommended Offers";
+
+    if (!groups[category]) {
+      groups[category] = [];
+    }
+
+    groups[category].push(item);
   });
 
   return groups;
@@ -347,8 +375,13 @@ function getEmoji(name) {
 export default function Order() {
   const navigate = useNavigate();
   const [user, setUser] = useState(
-    JSON.parse(localStorage.getItem("user") || "{}")
+    JSON.parse(localStorage.getItem("user") || "{}"),
   );
+
+  const [checkoutPayment, setCheckoutPayment] = useState(null);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutMessage, setCheckoutMessage] = useState("");
 
   const [activeNav, setActiveNav] = useState("Order");
   const [cart, setCart] = useState({});
@@ -420,6 +453,38 @@ export default function Order() {
     [cartItems, cart],
   );
 
+  async function openSnackOrderCheckout(orderId) {
+    try {
+      setCheckoutMessage("");
+
+      const paymentsResponse = await getMyPayments();
+      const payments = paymentsResponse.data || [];
+
+      const payment = payments.find(
+        (p) =>
+          p.type === "SNACK_ORDER" &&
+          Number(p.referenceId) === Number(orderId) &&
+          ["PENDING", "INITIATED", "PROCESSING"].includes(p.status),
+      );
+
+      if (!payment) {
+        setError(
+          "Order was created, but no pending payment was found. Please check your dashboard.",
+        );
+        return;
+      }
+
+      const processingResponse = await startSandboxPayment(payment.id);
+      setCheckoutPayment(processingResponse.data);
+      setCheckoutOpen(true);
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          "Order was created, but checkout could not be opened.",
+      );
+    }
+  }
+
   const handleConfirm = async () => {
     if (!stationId) {
       setError("Please select a station first.");
@@ -433,6 +498,7 @@ export default function Order() {
 
     try {
       setError("");
+      setCheckoutMessage("");
 
       const orderResponse = await createOrder({
         stationId: Number(stationId),
@@ -445,22 +511,13 @@ export default function Order() {
 
       const createdOrder = orderResponse.data;
 
-      const paymentsResponse = await getMyPayments();
-      const payments = paymentsResponse.data || [];
-
-      const matchingPayment = payments.find(
-        (payment) =>
-          payment.type === "SNACK_ORDER" &&
-          Number(payment.referenceId) === Number(createdOrder.id),
-      );
-
       setConfirmed(true);
       setCart({});
 
-      if (matchingPayment) {
-        navigate(`/payments/sandbox/${matchingPayment.id}`);
-      } else {
-        await loadData();
+      await loadData();
+
+      if (createdOrder?.id) {
+        await openSnackOrderCheckout(createdOrder.id);
       }
     } catch (err) {
       setError(err.response?.data?.message || "Failed to place order.");
@@ -468,6 +525,52 @@ export default function Order() {
   };
 
   const handleCancel = () => setCart({});
+
+  const handleSandboxResult = async (status) => {
+    if (!checkoutPayment?.id) return;
+
+    try {
+      setCheckoutLoading(true);
+      setCheckoutMessage("Recording sandbox result...");
+
+      const resultResponse = await submitSandboxPaymentResult(
+        checkoutPayment.id,
+        {
+          status,
+          referenceNo: `BZ-SANDBOX-${checkoutPayment.id}`,
+        },
+      );
+
+      setCheckoutPayment(resultResponse.data);
+
+      if (status === "PAID") {
+        setCheckoutMessage("Payment marked as paid successfully.");
+        setTimeout(() => {
+          setCheckoutOpen(false);
+          setCheckoutPayment(null);
+          setCheckoutMessage("");
+          navigate("/dashboard");
+        }, 1200);
+      } else if (status === "FAILED") {
+        setCheckoutMessage("Sandbox payment failed. You may try again later.");
+      } else if (status === "CANCELLED") {
+        setCheckoutMessage("Sandbox payment cancelled.");
+        setTimeout(() => {
+          setCheckoutOpen(false);
+          setCheckoutPayment(null);
+          setCheckoutMessage("");
+        }, 1000);
+      }
+
+      await loadData();
+    } catch (err) {
+      setCheckoutMessage(
+        err.response?.data?.message || "Failed to record sandbox result.",
+      );
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
 
   const handleNav = (label) => {
     setActiveNav(label);
@@ -1039,6 +1142,174 @@ export default function Order() {
           </div>
         </footer>
       </div>
+      {checkoutOpen && checkoutPayment && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.78)",
+            zIndex: 999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "24px",
+          }}
+        >
+          <div
+            style={{
+              width: "min(560px, 100%)",
+              background: CARD_BG,
+              border: `1px solid ${CYAN}`,
+              borderRadius: "18px",
+              padding: "28px",
+              boxShadow: "0 24px 80px rgba(0,0,0,0.45)",
+            }}
+          >
+            <h2
+              style={{
+                color: CYAN,
+                fontSize: "24px",
+                fontWeight: 900,
+                marginBottom: "10px",
+              }}
+            >
+              ByteZone Sandbox Checkout
+            </h2>
+
+            <p
+              style={{
+                color: MUTED,
+                fontSize: "13px",
+                lineHeight: 1.5,
+                marginBottom: "22px",
+              }}
+            >
+              This is a simulated payment gateway for project testing only. No
+              real money will be processed.
+            </p>
+
+            <div
+              style={{
+                background: "#101010",
+                borderRadius: "14px",
+                padding: "18px",
+                marginBottom: "18px",
+                border: "1px solid #222",
+              }}
+            >
+              <div style={checkoutRowStyle}>
+                <span>Payment ID:</span>
+                <strong>#{checkoutPayment.id}</strong>
+              </div>
+
+              <div style={checkoutRowStyle}>
+                <span>Type:</span>
+                <strong>{checkoutPayment.type}</strong>
+              </div>
+
+              <div style={checkoutRowStyle}>
+                <span>Amount:</span>
+                <strong>₱{Number(checkoutPayment.amount).toFixed(2)}</strong>
+              </div>
+
+              <div style={checkoutRowStyle}>
+                <span>Status:</span>
+                <strong style={{ color: CYAN }}>
+                  {checkoutPayment.status}
+                </strong>
+              </div>
+
+              <div
+                style={{
+                  marginTop: "18px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=BYTEZONE-SANDBOX-PAYMENT-${checkoutPayment.id}`}
+                  alt="ByteZone Sandbox QR"
+                  style={{
+                    width: "150px",
+                    height: "150px",
+                    background: "#fff",
+                    border: "8px solid #fff",
+                    borderRadius: "12px",
+                    boxShadow: "0 0 0 1px #333",
+                  }}
+                />
+              </div>
+
+              <p
+                style={{
+                  color: MUTED,
+                  fontSize: "12px",
+                  textAlign: "center",
+                  marginTop: "10px",
+                }}
+              >
+                Mock QR Sandbox • Reference: BZ-SANDBOX-{checkoutPayment.id}
+              </p>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr",
+                gap: "10px",
+              }}
+            >
+              <button
+                onClick={() => handleSandboxResult("PAID")}
+                disabled={checkoutLoading}
+                style={{
+                  ...checkoutButtonStyle,
+                  background: "#22c55e",
+                }}
+              >
+                Pay Success
+              </button>
+
+              <button
+                onClick={() => handleSandboxResult("FAILED")}
+                disabled={checkoutLoading}
+                style={{
+                  ...checkoutButtonStyle,
+                  background: "#ef4444",
+                }}
+              >
+                Fail Payment
+              </button>
+
+              <button
+                onClick={() => handleSandboxResult("CANCELLED")}
+                disabled={checkoutLoading}
+                style={{
+                  ...checkoutButtonStyle,
+                  background: "#6b7280",
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+
+            {checkoutMessage && (
+              <p
+                style={{
+                  color: checkoutMessage.includes("successfully")
+                    ? CYAN
+                    : MUTED,
+                  fontSize: "13px",
+                  marginTop: "16px",
+                }}
+              >
+                {checkoutMessage}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }
