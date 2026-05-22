@@ -47,42 +47,46 @@ function formatMemberSince(value) {
   });
 }
 
+function normalizeGameName(name = "") {
+  return name.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
 const GAMES = [
   {
     name: "Valorant",
     image:
       "https://www.riotgames.com/darkroom/1440/8d5c497da1c2eeec8cffa99b01abc64b:5329ca773963a5b739e98e715957ab39/ps-f2p-val-console-launch-16x9.jpg",
-    source: "Static",
+    priorityKey: "valorant",
   },
   {
     name: "Counter-Strike: Global Offensive (CS:GO)",
     image:
       "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/730/capsule_616x353.jpg?t=1749053861",
-    source: "Static",
+    priorityKey: "counterstrike",
   },
   {
     name: "League of Legends",
     image:
       "https://static.wikia.nocookie.net/leagueoflegends/images/7/7b/League_of_Legends_Cover.jpg/revision/latest/scale-to-width-down/1200?cb=20191018222445",
-    source: "Static",
+    priorityKey: "leagueoflegends",
   },
   {
     name: "Apex Legends",
     image:
       "https://www.nintendo.com/eu/media/images/assets/nintendo_switch_2_games/apexlegends_1/16x9_ApexLegends_image1600w.jpg",
-    source: "Static",
+    priorityKey: "apexlegends",
   },
   {
     name: "Fortnite",
     image:
       "https://dropinblog.net/34253310/files/featured/imagem-2024-09-26-103919931.png",
-    source: "Static",
+    priorityKey: "fortnite",
   },
   {
     name: "Dota 2",
     image:
       "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/570/capsule_616x353.jpg?t=1769535998",
-    source: "Static",
+    priorityKey: "dota2",
   },
 ];
 
@@ -299,7 +303,7 @@ export default function UserDashboard() {
           image: game.background,
           rating: game.rating,
           released: game.released,
-          source: "Public API",
+          priorityKey: normalizeGameName(game.name),
         }));
 
       setApiGames(fetchedGames);
@@ -323,24 +327,44 @@ export default function UserDashboard() {
     navigate("/login");
   };
 
-  const fixedTopGames = GAMES.filter(
-    (game) =>
-      game.name.toLowerCase().includes("valorant") ||
-      game.name.toLowerCase().includes("counter-strike") ||
-      game.name.toLowerCase().includes("cs:go"),
+  const findApiGame = (keywords) =>
+    apiGames.find((game) => {
+      const normalizedName = normalizeGameName(game.name);
+      return keywords.some((keyword) => normalizedName.includes(keyword));
+    });
+
+  const valorantApiGame = findApiGame(["valorant"]);
+
+  const counterStrikeApiGame = findApiGame([
+    "counterstrike",
+    "counterstrikeglobaloffensive",
+    "counterstrike2",
+    "csgo",
+  ]);
+
+  const priorityGames = [
+    valorantApiGame || GAMES[0],
+    counterStrikeApiGame || GAMES[1],
+  ];
+
+  const alreadyUsedNames = new Set(
+    priorityGames.map((game) => normalizeGameName(game.name)),
   );
 
-  const mergedApiGames = apiGames.filter(
-    (apiGame) =>
-      !fixedTopGames.some(
-        (fixedGame) =>
-          fixedGame.name.toLowerCase() === apiGame.name.toLowerCase(),
-      ),
+  const remainingApiGames = apiGames.filter(
+    (game) => !alreadyUsedNames.has(normalizeGameName(game.name)),
+  );
+
+  const remainingStaticGames = GAMES.slice(2).filter(
+    (game) => !alreadyUsedNames.has(normalizeGameName(game.name)),
   );
 
   const topPickGames =
     apiGames.length > 0
-      ? [...fixedTopGames, ...mergedApiGames].slice(0, 8)
+      ? [...priorityGames, ...remainingApiGames, ...remainingStaticGames].slice(
+          0,
+          8,
+        )
       : GAMES;
 
   const canPrev = gameIdx > 0;
@@ -767,15 +791,6 @@ export default function UserDashboard() {
                   <span style={{ color: "#fff" }}>Top Picks for </span>
                   <span style={{ color: CYAN }}>Gamers</span>
                 </h2>
-                <p
-                  style={{
-                    color: MUTED,
-                    fontSize: "12px",
-                    marginTop: "6px",
-                  }}
-                >
-                  Valorant and CS:GO stay featured, with extra games loaded from the public API when available.
-                </p>
               </div>
 
               <div style={{ position: "relative" }}>
@@ -838,24 +853,6 @@ export default function UserDashboard() {
                                 "linear-gradient(to top, rgba(0,0,0,0.90) 0%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0.05) 100%)",
                             }}
                           />
-
-                          {game.source === "Public API" && (
-                            <div
-                              style={{
-                                position: "absolute",
-                                top: "10px",
-                                left: "10px",
-                                padding: "4px 8px",
-                                borderRadius: "999px",
-                                background: "rgba(57,213,255,0.9)",
-                                color: "#000",
-                                fontSize: "10px",
-                                fontWeight: 900,
-                              }}
-                            >
-                              API
-                            </div>
-                          )}
 
                           <div
                             style={{
