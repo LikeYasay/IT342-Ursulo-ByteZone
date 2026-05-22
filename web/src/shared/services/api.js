@@ -9,7 +9,8 @@ api.interceptors.request.use((config) => {
 
   const isAuthRoute =
     config.url?.includes("/api/auth/login") ||
-    config.url?.includes("/api/auth/register");
+    config.url?.includes("/api/auth/register") ||
+    config.url?.includes("/api/auth/google");
 
   if (token && !isAuthRoute) {
     config.headers.Authorization = `Bearer ${token}`;
