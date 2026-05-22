@@ -27,52 +27,53 @@ export default function ByteZoneLogin() {
   useEffect(() => {
     if (!googleClientId) return;
 
-    const loadGoogleScript = () => {
-      if (window.google?.accounts?.id) {
-        initializeGoogleButton();
+    const initializeGoogleButton = () => {
+      if (
+        !googleClientId ||
+        !window.google?.accounts?.id ||
+        !googleButtonRef.current
+      ) {
         return;
       }
 
-      const existingScript = document.querySelector(
-        'script[src="https://accounts.google.com/gsi/client"]'
-      );
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: handleGoogleCredential,
+      });
 
-      if (existingScript) {
-        existingScript.addEventListener("load", initializeGoogleButton);
-        return;
-      }
+      googleButtonRef.current.innerHTML = "";
 
-      const script = document.createElement("script");
-      script.src = "https://accounts.google.com/gsi/client";
-      script.async = true;
-      script.defer = true;
-      script.onload = initializeGoogleButton;
-      document.body.appendChild(script);
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: "filled_black",
+        size: "large",
+        width: 360,
+        text: "signin_with",
+        shape: "pill",
+        logo_alignment: "center",
+      });
     };
 
-    loadGoogleScript();
-  }, [googleClientId]);
-
-  const initializeGoogleButton = () => {
-    if (!googleClientId || !window.google?.accounts?.id || !googleButtonRef.current) {
+    if (window.google?.accounts?.id) {
+      initializeGoogleButton();
       return;
     }
 
-    window.google.accounts.id.initialize({
-      client_id: googleClientId,
-      callback: handleGoogleCredential,
-    });
+    const existingScript = document.querySelector(
+      'script[src="https://accounts.google.com/gsi/client"]',
+    );
 
-    googleButtonRef.current.innerHTML = "";
+    if (existingScript) {
+      existingScript.addEventListener("load", initializeGoogleButton);
+      return;
+    }
 
-    window.google.accounts.id.renderButton(googleButtonRef.current, {
-      theme: "filled_black",
-      size: "large",
-      width: 360,
-      text: "signin_with",
-      shape: "pill",
-    });
-  };
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = initializeGoogleButton;
+    document.body.appendChild(script);
+  }, [googleClientId]);
 
   const handleGoogleCredential = async (credentialResponse) => {
     if (!credentialResponse?.credential) {
@@ -94,7 +95,7 @@ export default function ByteZoneLogin() {
       setError(
         err.response?.data?.message ||
           err.response?.data?.error ||
-          "Google login failed. Check GOOGLE_CLIENT_ID setup."
+          "Google login failed. Check GOOGLE_CLIENT_ID setup.",
       );
     } finally {
       setGoogleLoading(false);
@@ -157,6 +158,21 @@ export default function ByteZoneLogin() {
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: ${DARK_BG}; }
+        .google-login-wrapper {
+          width: 100%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          overflow: hidden;
+        }
+        .google-login-wrapper > div {
+          width: 100% !important;
+          display: flex !important;
+          justify-content: center !important;
+        }
+        .google-login-wrapper iframe {
+          margin: 0 auto !important;
+        }
       `}</style>
 
       <div
@@ -329,9 +345,8 @@ export default function ByteZoneLogin() {
 
             {googleClientId ? (
               <div
+                className="google-login-wrapper"
                 style={{
-                  display: "flex",
-                  justifyContent: "center",
                   opacity: googleLoading ? 0.65 : 1,
                   pointerEvents: googleLoading ? "none" : "auto",
                 }}
