@@ -71,6 +71,10 @@ public class UserService {
             user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
 
+        if (Boolean.TRUE.equals(request.getRemoveProfileImage())) {
+            user.setProfileImageUrl(null);
+        }
+
         return userRepository.save(user);
     }
 

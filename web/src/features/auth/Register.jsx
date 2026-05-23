@@ -11,6 +11,110 @@ const MUTED = "#8a8f98";
 const INPUT_BG = "#111111";
 const INPUT_BORDER = "#2a2a2a";
 
+function UserIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M12 12C14.76 12 17 9.76 17 7C17 4.24 14.76 2 12 2C9.24 2 7 4.24 7 7C7 9.76 9.24 12 12 12Z"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <path
+        d="M4 22C4 17.58 7.58 14 12 14C16.42 14 20 17.58 20 22"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function MailIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M4 5H20C21.1 5 22 5.9 22 7V17C22 18.1 21.1 19 20 19H4C2.9 19 2 18.1 2 17V7C2 5.9 2.9 5 4 5Z"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <path
+        d="M22 7L12 13L2 7"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M7 11V8C7 5.24 9.24 3 12 3C14.76 3 17 5.24 17 8V11"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M6 11H18C19.1 11 20 11.9 20 13V20C20 21.1 19.1 22 18 22H6C4.9 22 4 21.1 4 20V13C4 11.9 4.9 11 6 11Z"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M2 12C3.76 7.64 7.5 5 12 5C16.5 5 20.24 7.64 22 12C20.24 16.36 16.5 19 12 19C7.5 19 3.76 16.36 2 12Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 15C13.66 15 15 13.66 15 12C15 10.34 13.66 9 12 9C10.34 9 9 10.34 9 12C9 13.66 10.34 15 12 15Z"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
+function EyeOffIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M3 3L21 21"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M10.58 10.58C10.21 10.95 10 11.45 10 12C10 13.1 10.9 14 12 14C12.55 14 13.05 13.79 13.42 13.42"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M9.88 5.09C10.56 5.03 11.26 5 12 5C16.5 5 20.24 7.64 22 12C21.5 13.24 20.79 14.33 19.91 15.24"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M6.61 6.61C4.63 7.86 3.06 9.72 2 12C3.76 16.36 7.5 19 12 19C13.54 19 14.98 18.69 16.26 18.12"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export default function ByteZoneSignUp() {
   const navigate = useNavigate();
   const googleButtonRef = useRef(null);
@@ -22,6 +126,8 @@ export default function ByteZoneSignUp() {
     confirm: "",
   });
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [focused, setFocused] = useState(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -29,6 +135,34 @@ export default function ByteZoneSignUp() {
   const [success, setSuccess] = useState("");
 
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+
+  const handleGoogleCredential = async (credentialResponse) => {
+    if (!credentialResponse?.credential) {
+      setError("Google sign up failed. No credential was returned.");
+      return;
+    }
+
+    try {
+      setGoogleLoading(true);
+      setError("");
+      setSuccess("");
+
+      const response = await googleLoginUser(credentialResponse.credential);
+
+      localStorage.setItem("token", response.accessToken);
+      localStorage.setItem("user", JSON.stringify(response.user));
+
+      navigate(getRedirectPathByRole(response.user?.role));
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          "Google sign up failed. Check GOOGLE_CLIENT_ID setup.",
+      );
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!googleClientId) return;
@@ -80,34 +214,6 @@ export default function ByteZoneSignUp() {
     script.onload = initializeGoogleButton;
     document.body.appendChild(script);
   }, [googleClientId]);
-
-  const handleGoogleCredential = async (credentialResponse) => {
-    if (!credentialResponse?.credential) {
-      setError("Google sign up failed. No credential was returned.");
-      return;
-    }
-
-    try {
-      setGoogleLoading(true);
-      setError("");
-      setSuccess("");
-
-      const response = await googleLoginUser(credentialResponse.credential);
-
-      localStorage.setItem("token", response.accessToken);
-      localStorage.setItem("user", JSON.stringify(response.user));
-
-      navigate(getRedirectPathByRole(response.user?.role));
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          err.response?.data?.error ||
-          "Google sign up failed. Check GOOGLE_CLIENT_ID setup.",
-      );
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -161,11 +267,56 @@ export default function ByteZoneSignUp() {
     color: "#fff",
     fontSize: "15px",
     fontFamily: "'Montserrat', sans-serif",
-    padding: "0 16px",
+    padding: "0 48px 0 46px",
     outline: "none",
     transition: "border-color 0.2s, box-shadow 0.2s",
     boxShadow: focused === name ? `0 0 0 3px rgba(57,213,255,0.12)` : "none",
   });
+
+  const iconStyle = {
+    position: "absolute",
+    left: "15px",
+    top: "50%",
+    transform: "translateY(-50%)",
+    color: MUTED,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  };
+
+  const passwordEyeButtonStyle = {
+    position: "absolute",
+    right: "14px",
+    top: "50%",
+    transform: "translateY(-50%)",
+    width: "28px",
+    height: "28px",
+    border: "none",
+    background: "transparent",
+    color: showPassword ? CYAN : MUTED,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 0,
+  };
+
+  const confirmEyeButtonStyle = {
+    position: "absolute",
+    right: "14px",
+    top: "50%",
+    transform: "translateY(-50%)",
+    width: "28px",
+    height: "28px",
+    border: "none",
+    background: "transparent",
+    color: showConfirm ? CYAN : MUTED,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 0,
+  };
 
   return (
     <>
@@ -257,16 +408,23 @@ export default function ByteZoneSignUp() {
                 >
                   Full Name
                 </label>
-                <input
-                  name="fullName"
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={form.fullName}
-                  onChange={handleChange}
-                  onFocus={() => setFocused("fullName")}
-                  onBlur={() => setFocused(null)}
-                  style={inputStyle("fullName")}
-                />
+
+                <div style={{ position: "relative" }}>
+                  <span style={iconStyle}>
+                    <UserIcon />
+                  </span>
+
+                  <input
+                    name="fullName"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={form.fullName}
+                    onChange={handleChange}
+                    onFocus={() => setFocused("fullName")}
+                    onBlur={() => setFocused(null)}
+                    style={inputStyle("fullName")}
+                  />
+                </div>
               </div>
 
               <div>
@@ -281,16 +439,23 @@ export default function ByteZoneSignUp() {
                 >
                   Email
                 </label>
-                <input
-                  name="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={form.email}
-                  onChange={handleChange}
-                  onFocus={() => setFocused("email")}
-                  onBlur={() => setFocused(null)}
-                  style={inputStyle("email")}
-                />
+
+                <div style={{ position: "relative" }}>
+                  <span style={iconStyle}>
+                    <MailIcon />
+                  </span>
+
+                  <input
+                    name="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={form.email}
+                    onChange={handleChange}
+                    onFocus={() => setFocused("email")}
+                    onBlur={() => setFocused(null)}
+                    style={inputStyle("email")}
+                  />
+                </div>
               </div>
 
               <div>
@@ -305,16 +470,32 @@ export default function ByteZoneSignUp() {
                 >
                   Password
                 </label>
-                <input
-                  name="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={form.password}
-                  onChange={handleChange}
-                  onFocus={() => setFocused("password")}
-                  onBlur={() => setFocused(null)}
-                  style={inputStyle("password")}
-                />
+
+                <div style={{ position: "relative" }}>
+                  <span style={iconStyle}>
+                    <LockIcon />
+                  </span>
+
+                  <input
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={form.password}
+                    onChange={handleChange}
+                    onFocus={() => setFocused("password")}
+                    onBlur={() => setFocused(null)}
+                    style={inputStyle("password")}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    style={passwordEyeButtonStyle}
+                  >
+                    {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                  </button>
+                </div>
               </div>
 
               <div>
@@ -329,16 +510,32 @@ export default function ByteZoneSignUp() {
                 >
                   Confirm Password
                 </label>
-                <input
-                  name="confirm"
-                  type="password"
-                  placeholder="Confirm your password"
-                  value={form.confirm}
-                  onChange={handleChange}
-                  onFocus={() => setFocused("confirm")}
-                  onBlur={() => setFocused(null)}
-                  style={inputStyle("confirm")}
-                />
+
+                <div style={{ position: "relative" }}>
+                  <span style={iconStyle}>
+                    <LockIcon />
+                  </span>
+
+                  <input
+                    name="confirm"
+                    type={showConfirm ? "text" : "password"}
+                    placeholder="Confirm your password"
+                    value={form.confirm}
+                    onChange={handleChange}
+                    onFocus={() => setFocused("confirm")}
+                    onBlur={() => setFocused(null)}
+                    style={inputStyle("confirm")}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm((prev) => !prev)}
+                    aria-label={showConfirm ? "Hide password" : "Show password"}
+                    style={confirmEyeButtonStyle}
+                  >
+                    {showConfirm ? <EyeOffIcon /> : <EyeIcon />}
+                  </button>
+                </div>
               </div>
 
               {error && (

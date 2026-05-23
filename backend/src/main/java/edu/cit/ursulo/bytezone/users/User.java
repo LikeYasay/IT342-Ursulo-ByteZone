@@ -31,6 +31,9 @@ public class User {
     @Column(name = "tournament_wins", nullable = false)
     private Integer tournamentWins = 0;
 
+    @Column(name = "total_hours_played_minutes", nullable = false)
+    private Integer totalHoursPlayedMinutes = 0;
+
     @Column(name = "profile_image_url")
     private String profileImageUrl;
 
@@ -50,6 +53,10 @@ public class User {
 
         if (this.tournamentWins == null) {
             this.tournamentWins = 0;
+        }
+
+        if (this.totalHoursPlayedMinutes == null) {
+            this.totalHoursPlayedMinutes = 0;
         }
     }
 
@@ -75,6 +82,18 @@ public class User {
 
     public Integer getTournamentWins() {
         return tournamentWins;
+    }
+
+    public Integer getTotalHoursPlayedMinutes() {
+        return totalHoursPlayedMinutes;
+    }
+
+    public Double getTotalHoursPlayed() {
+        if (totalHoursPlayedMinutes == null) {
+            return 0.0;
+        }
+
+        return Math.round((totalHoursPlayedMinutes / 60.0) * 100.0) / 100.0;
     }
 
     public String getProfileImageUrl() {
@@ -107,6 +126,22 @@ public class User {
 
     public void setTournamentWins(Integer tournamentWins) {
         this.tournamentWins = tournamentWins;
+    }
+
+    public void setTotalHoursPlayedMinutes(Integer totalHoursPlayedMinutes) {
+        this.totalHoursPlayedMinutes = totalHoursPlayedMinutes;
+    }
+
+    public void addPlayedMinutes(int minutes) {
+        if (minutes <= 0) {
+            return;
+        }
+
+        if (this.totalHoursPlayedMinutes == null) {
+            this.totalHoursPlayedMinutes = 0;
+        }
+
+        this.totalHoursPlayedMinutes += minutes;
     }
 
     public void setProfileImageUrl(String profileImageUrl) {

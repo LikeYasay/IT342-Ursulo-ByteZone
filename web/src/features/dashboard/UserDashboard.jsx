@@ -233,7 +233,6 @@ export default function UserDashboard() {
   const [activeNav, setActiveNav] = useState("Home");
   const [gameIdx, setGameIdx] = useState(0);
 
-
   const [user, setUser] = useState(null);
   const [reservations, setReservations] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -369,13 +368,22 @@ export default function UserDashboard() {
   const canPrev = gameIdx > 0;
   const canNext = gameIdx + visibleGames < topPickGames.length;
 
-  const activeReservationStatuses = ["PENDING", "APPROVED"];
+  const activeReservationStatuses = [
+    "PENDING",
+    "APPROVED",
+    "CHECKED_IN",
+    "COMPLETED",
+  ];
 
-  const latestReservation = activeSession
-    ? null
-    : reservations.find((reservation) =>
-        activeReservationStatuses.includes(reservation.status),
-      );
+  const latestReservation =
+    reservations.find((reservation) =>
+      ["PENDING", "APPROVED"].includes(reservation.status),
+    ) ||
+    reservations.find((reservation) =>
+      activeReservationStatuses.includes(reservation.status),
+    ) ||
+    reservations[0] ||
+    null;
 
   const latestOrder = orders[0];
   const latestPayment = payments[0];
@@ -411,23 +419,25 @@ export default function UserDashboard() {
 
   const lastVisit = formatDisplayDate(latestActivityDate);
 
-  const currentStation =
-    activeSession?.station?.stationNo ||
-    latestOrder?.station?.stationNo ||
-    "N/A";
+  const currentStation = activeSession?.station?.stationNo || "N/A";
 
   const reservedStation = latestReservation?.station?.stationNo || "N/A";
 
-  const reservationDate = latestReservation?.date
-    ? new Date(latestReservation.date).toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      })
-    : "N/A";
+  const reservationDate =
+    latestReservation?.date || latestReservation?.reservationDate
+      ? new Date(
+          latestReservation.date || latestReservation.reservationDate,
+        ).toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        })
+      : "N/A";
 
   const reservationTimeRange = latestReservation?.startTime
-    ? `${latestReservation.startTime} – ${latestReservation.endTime || ""}`
+    ? `${latestReservation.startTime}${
+        latestReservation.endTime ? ` – ${latestReservation.endTime}` : ""
+      }`
     : "N/A";
 
   const sessionStatus = activeSession?.status || "Inactive";
@@ -493,17 +503,27 @@ export default function UserDashboard() {
           >
             <div
               style={{
-                width: "34px",
-                height: "34px",
-                background: `linear-gradient(135deg, ${CYAN}, #0070a8)`,
-                borderRadius: "8px",
+                width: "38px",
+                height: "38px",
+                borderRadius: "10px",
+                overflow: "hidden",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "16px",
+                background: "transparent",
+                flexShrink: 0,
               }}
             >
-              ⚡
+              <img
+                src="/ByteZoneLogo.png"
+                alt="ByteZone Logo"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                  display: "block",
+                }}
+              />
             </div>
 
             <span style={{ color: "#fff" }}>Byte</span>

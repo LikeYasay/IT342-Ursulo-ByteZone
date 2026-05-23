@@ -11,8 +11,6 @@ public class ExtendSessionRequest {
     @Min(value = 1, message = "Extension minutes must be at least 1")
     private Integer minutes;
 
-    @NotNull(message = "Amount is required")
-    @Min(value = 1, message = "Amount must be at least 1")
     private BigDecimal amount;
 
     public Integer getMinutes() {

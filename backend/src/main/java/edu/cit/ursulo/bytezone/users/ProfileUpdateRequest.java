@@ -13,6 +13,8 @@ public class ProfileUpdateRequest {
     @Size(min = 6, message = "Password must be at least 6 characters")
     private String password;
 
+    private Boolean removeProfileImage;
+
     public String getFullName() {
         return fullName;
     }
@@ -25,6 +27,10 @@ public class ProfileUpdateRequest {
         return password;
     }
 
+    public Boolean getRemoveProfileImage() {
+        return removeProfileImage;
+    }
+
     public void setFullName(String fullName) {
         this.fullName = fullName;
     }
@@ -35,5 +41,9 @@ public class ProfileUpdateRequest {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public void setRemoveProfileImage(Boolean removeProfileImage) {
+        this.removeProfileImage = removeProfileImage;
     }
 }

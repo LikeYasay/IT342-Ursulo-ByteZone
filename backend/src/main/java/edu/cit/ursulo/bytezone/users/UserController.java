@@ -44,15 +44,17 @@ public class UserController {
         );
     }
 
-    private MeResponse mapToMeResponse(User user) {
-        return new MeResponse(
-                user.getId(),
-                user.getFullName(),
-                user.getEmail(),
-                user.getRole().name(),
-                user.getTournamentWins(),
-                user.getProfileImageUrl(),
-                user.getCreatedAt()
-        );
-    }
+private MeResponse mapToMeResponse(User user) {
+    return new MeResponse(
+            user.getId(),
+            user.getFullName(),
+            user.getEmail(),
+            user.getRole().name(),
+            user.getTournamentWins(),
+            user.getTotalHoursPlayed(),
+            user.getTotalHoursPlayedMinutes(),
+            user.getProfileImageUrl(),
+            user.getCreatedAt()
+    );
+}
 }

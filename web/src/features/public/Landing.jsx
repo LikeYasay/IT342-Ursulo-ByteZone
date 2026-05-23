@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { getGamingHighlights } from "../publicApi/publicApiService";
 
 const CYAN = "#39d5ff";
 const DARK_BG = "#000000";
@@ -400,57 +401,67 @@ const styles = {
     cursor: "pointer",
     transition: "color 0.2s",
     fontFamily: "'Montserrat', sans-serif",
+    background: "transparent",
+    border: "none",
   },
 };
 
-const GAMES = [
+const STATIC_GAMES = [
   {
     name: "Valorant",
     genre: "Tactical FPS",
     image:
       "https://www.riotgames.com/darkroom/1440/8d5c497da1c2eeec8cffa99b01abc64b:5329ca773963a5b739e98e715957ab39/ps-f2p-val-console-launch-16x9.jpg",
+    priorityKey: "valorant",
   },
   {
     name: "CS:GO",
     genre: "Classic FPS",
     image:
       "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/730/capsule_616x353.jpg?t=1749053861",
+    priorityKey: "counterstrike",
   },
   {
     name: "League of Legends",
     genre: "MOBA",
     image:
       "https://static.wikia.nocookie.net/leagueoflegends/images/7/7b/League_of_Legends_Cover.jpg/revision/latest/scale-to-width-down/1200?cb=20191018222445",
+    priorityKey: "leagueoflegends",
   },
   {
     name: "Dota 2",
     genre: "MOBA",
     image:
       "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/570/capsule_616x353.jpg?t=1769535998",
+    priorityKey: "dota2",
   },
   {
     name: "Fortnite",
     genre: "Battle Royale",
     image:
       "https://dropinblog.net/34253310/files/featured/imagem-2024-09-26-103919931.png",
+    priorityKey: "fortnite",
   },
   {
     name: "Apex Legends",
     genre: "Battle Royale",
     image:
       "https://www.nintendo.com/eu/media/images/assets/nintendo_switch_2_games/apexlegends_1/16x9_ApexLegends_image1600w.jpg",
+    priorityKey: "apexlegends",
   },
   {
     name: "Overwatch 2",
     genre: "Team FPS",
     image:
       "https://xboxwire.thesourcemediaassets.com/sites/2/2022/10/OW2-be9287b234afbe7898ac.jpg",
+    priorityKey: "overwatch2",
   },
   {
     name: "Genshin Impact",
     genre: "Action RPG",
     image:
       "https://image.api.playstation.com/vulcan/ap/rnd/202508/2602/30935168a0f21b6710dc2bd7bb37c23ed937fb9fa747d84c.png",
+    priorityKey: "genshinimpact",
   },
 ];
 
@@ -472,8 +483,27 @@ const OFFERS = [
   },
 ];
 
-function NavLink({ children }) {
+function normalizeGameName(name = "") {
+  return name.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function getGenreFromApiGame(game) {
+  const firstGenre = Array.isArray(game.genres) ? game.genres[0] : null;
+
+  if (typeof firstGenre === "string") {
+    return firstGenre;
+  }
+
+  if (firstGenre?.name) {
+    return firstGenre.name;
+  }
+
+  return "Popular Game";
+}
+
+function NavLink({ children, onClick }) {
   const [hovered, setHovered] = useState(false);
+
   return (
     <button
       style={{
@@ -481,6 +511,7 @@ function NavLink({ children }) {
         color: hovered ? "#fff" : MUTED,
         background: hovered ? "rgba(255,255,255,0.06)" : "transparent",
       }}
+      onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -491,6 +522,7 @@ function NavLink({ children }) {
 
 function OfferCard({ icon, title, desc }) {
   const [hovered, setHovered] = useState(false);
+
   return (
     <div
       style={{
@@ -510,8 +542,9 @@ function OfferCard({ icon, title, desc }) {
   );
 }
 
-function GameCard({ name, genre, image }) {
+function GameCard({ name, genre, image, source }) {
   const [hovered, setHovered] = useState(false);
+
   return (
     <div
       style={{
@@ -541,7 +574,7 @@ function GameCard({ name, genre, image }) {
       </div>
       <div style={styles.gameInfo}>
         <div style={styles.gameName}>{name}</div>
-        <span style={styles.gameTag}>{genre}</span>
+        <span style={styles.gameTag}>{source ? `${genre} • API` : genre}</span>
       </div>
     </div>
   );
@@ -550,12 +583,105 @@ function GameCard({ name, genre, image }) {
 export default function ByteZoneLanding() {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
+  const [apiGames, setApiGames] = useState([]);
+
+  const location = useLocation();
+
+  const scrollToSection = (sectionId) => {
+    const section = document.getElementById(sectionId);
+
+    if (!section) {
+      return;
+    }
+
+    section.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
+  useEffect(() => {
+    const targetSection = location.state?.scrollTo;
+
+    if (!targetSection) {
+      return;
+    }
+
+    setTimeout(() => {
+      scrollToSection(targetSection);
+    }, 150);
+  }, [location.state]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
+
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    async function loadGames() {
+      try {
+        const response = await getGamingHighlights();
+
+        const mappedGames = (response.data || [])
+          .filter((game) => game?.name && game?.background)
+          .map((game) => ({
+            name: game.name,
+            genre: getGenreFromApiGame(game),
+            image: game.background,
+            priorityKey: normalizeGameName(game.name),
+            source: "RAWG API",
+          }));
+
+        setApiGames(mappedGames);
+      } catch {
+        setApiGames([]);
+      }
+    }
+
+    loadGames();
+  }, []);
+
+  const findApiGame = (keywords) =>
+    apiGames.find((game) => {
+      const normalizedName = normalizeGameName(game.name);
+      return keywords.some((keyword) => normalizedName.includes(keyword));
+    });
+
+  const valorantApiGame = findApiGame(["valorant"]);
+
+  const counterStrikeApiGame = findApiGame([
+    "counterstrike",
+    "counterstrikeglobaloffensive",
+    "counterstrike2",
+    "csgo",
+  ]);
+
+  const priorityGames = [
+    valorantApiGame || STATIC_GAMES[0],
+    counterStrikeApiGame || STATIC_GAMES[1],
+  ];
+
+  const alreadyUsedNames = new Set(
+    priorityGames.map((game) => normalizeGameName(game.name)),
+  );
+
+  const remainingApiGames = apiGames.filter(
+    (game) => !alreadyUsedNames.has(normalizeGameName(game.name)),
+  );
+
+  const remainingStaticGames = STATIC_GAMES.slice(2).filter(
+    (game) => !alreadyUsedNames.has(normalizeGameName(game.name)),
+  );
+
+  const landingGames =
+    apiGames.length > 0
+      ? [...priorityGames, ...remainingApiGames, ...remainingStaticGames].slice(
+          0,
+          8,
+        )
+      : STATIC_GAMES;
 
   return (
     <>
@@ -600,14 +726,41 @@ export default function ByteZoneLanding() {
           }}
         >
           <div style={styles.logo}>
-            <div style={styles.logoIcon}>⚡</div>
+            <div
+              style={{
+                width: "38px",
+                height: "38px",
+                borderRadius: "10px",
+                overflow: "hidden",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "transparent",
+                flexShrink: 0,
+              }}
+            >
+              <img
+                src="/ByteZoneLogo.png"
+                alt="ByteZone Logo"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                  display: "block",
+                }}
+              />
+            </div>
             <span style={{ color: "#fff" }}>Byte</span>
             <span style={{ color: CYAN }}>Zone</span>
           </div>
 
           <div style={styles.navLinks}>
-            <NavLink>About</NavLink>
-            <NavLink>Games</NavLink>
+            <NavLink onClick={() => scrollToSection("what-we-offer")}>
+              About
+            </NavLink>
+            <NavLink onClick={() => scrollToSection("available-games")}>
+              Games
+            </NavLink>
           </div>
 
           <div style={{ display: "flex", gap: "10px" }}>
@@ -683,14 +836,14 @@ export default function ByteZoneLanding() {
               <button
                 className="btn-primary"
                 style={styles.btnPrimary}
-                onClick={() => navigate("/register")}
+                onClick={() => navigate("/login")}
               >
                 Get Started
               </button>
               <button
                 className="btn-secondary"
                 style={styles.btnSecondary}
-                onClick={() => window.scrollTo({ top: 900, behavior: "smooth" })}
+                onClick={() => scrollToSection("what-we-offer")}
               >
                 Learn More
               </button>
@@ -712,7 +865,10 @@ export default function ByteZoneLanding() {
           </div>
         </section>
 
-        <div style={{ padding: "0 0 20px", background: DARK_BG }}>
+        <div
+          id="what-we-offer"
+          style={{ padding: "0 0 20px", background: DARK_BG }}
+        >
           <div style={styles.section}>
             <div style={styles.sectionHeader}>
               <h2 style={styles.sectionTitle}>
@@ -730,7 +886,7 @@ export default function ByteZoneLanding() {
           </div>
         </div>
 
-        <div style={styles.gamesBg}>
+        <div id="available-games" style={styles.gamesBg}>
           <div style={{ ...styles.sectionHeader, padding: "0 60px 50px" }}>
             <h2 style={styles.sectionTitle}>
               Available <span style={styles.sectionCyan}>Games</span>
@@ -740,7 +896,7 @@ export default function ByteZoneLanding() {
             </p>
           </div>
           <div style={styles.gamesGrid}>
-            {GAMES.map((g) => (
+            {landingGames.map((g) => (
               <GameCard key={g.name} {...g} />
             ))}
           </div>
@@ -751,11 +907,20 @@ export default function ByteZoneLanding() {
             © 2026 ByteZone. All rights reserved.
           </div>
           <div style={styles.footerLinks}>
-            {["About", "Games"].map((l) => (
-              <span key={l} className="footer-link" style={styles.footerLink}>
-                {l}
-              </span>
-            ))}
+            <button
+              className="footer-link"
+              style={styles.footerLink}
+              onClick={() => scrollToSection("what-we-offer")}
+            >
+              About
+            </button>
+            <button
+              className="footer-link"
+              style={styles.footerLink}
+              onClick={() => scrollToSection("available-games")}
+            >
+              Games
+            </button>
           </div>
         </footer>
       </div>

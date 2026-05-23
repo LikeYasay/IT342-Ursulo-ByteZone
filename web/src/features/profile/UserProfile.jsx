@@ -5,6 +5,7 @@ import {
   logoutUser,
   uploadMyProfileImage,
   updateMyProfile,
+  removeMyProfileImage,
 } from "../auth/authService";
 import NotificationBell from "../notifications/NotificationBell.jsx";
 
@@ -18,6 +19,110 @@ function getUserImageUrl(user) {
   return user?.profileImageUrl || user?.profile_image_url || "";
 }
 
+function UserIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M12 12C14.76 12 17 9.76 17 7C17 4.24 14.76 2 12 2C9.24 2 7 4.24 7 7C7 9.76 9.24 12 12 12Z"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <path
+        d="M4 22C4 17.58 7.58 14 12 14C16.42 14 20 17.58 20 22"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function MailIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M4 5H20C21.1 5 22 5.9 22 7V17C22 18.1 21.1 19 20 19H4C2.9 19 2 18.1 2 17V7C2 5.9 2.9 5 4 5Z"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <path
+        d="M22 7L12 13L2 7"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M7 11V8C7 5.24 9.24 3 12 3C14.76 3 17 5.24 17 8V11"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M6 11H18C19.1 11 20 11.9 20 13V20C20 21.1 19.1 22 18 22H6C4.9 22 4 21.1 4 20V13C4 11.9 4.9 11 6 11Z"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M2 12C3.76 7.64 7.5 5 12 5C16.5 5 20.24 7.64 22 12C20.24 16.36 16.5 19 12 19C7.5 19 3.76 16.36 2 12Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 15C13.66 15 15 13.66 15 12C15 10.34 13.66 9 12 9C10.34 9 9 10.34 9 12C9 13.66 10.34 15 12 15Z"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
+function EyeOffIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M3 3L21 21"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M10.58 10.58C10.21 10.95 10 11.45 10 12C10 13.1 10.9 14 12 14C12.55 14 13.05 13.79 13.42 13.42"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M9.88 5.09C10.56 5.03 11.26 5 12 5C16.5 5 20.24 7.64 22 12C21.5 13.24 20.79 14.33 19.91 15.24"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M6.61 6.61C4.63 7.86 3.06 9.72 2 12C3.76 16.36 7.5 19 12 19C13.54 19 14.98 18.69 16.26 18.12"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export default function UserProfile() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
@@ -29,6 +134,8 @@ export default function UserProfile() {
     email: "",
     password: "",
   });
+
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -111,11 +218,37 @@ export default function UserProfile() {
       await loadProfile();
     } catch (err) {
       setError(
-        err.response?.data?.message || "Failed to upload profile image."
+        err.response?.data?.message || "Failed to upload profile image.",
       );
     } finally {
       setUploading(false);
       event.target.value = "";
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (!imageUrl || uploading) return;
+
+    try {
+      setUploading(true);
+      setError("");
+      setMessage("");
+
+      const response = await removeMyProfileImage();
+      const updatedUser = response.data;
+
+      setUser(updatedUser);
+      setProfilePreview("");
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      setMessage("Profile picture removed successfully.");
+      await loadProfile();
+    } catch (err) {
+      setError(
+        err.response?.data?.message || "Failed to remove profile picture.",
+      );
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -204,17 +337,27 @@ export default function UserProfile() {
           >
             <div
               style={{
-                width: "34px",
-                height: "34px",
-                background: `linear-gradient(135deg, ${CYAN}, #0070a8)`,
-                borderRadius: "8px",
+                width: "38px",
+                height: "38px",
+                borderRadius: "10px",
+                overflow: "hidden",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "16px",
+                background: "transparent",
+                flexShrink: 0,
               }}
             >
-              ⚡
+              <img
+                src="/ByteZoneLogo.png"
+                alt="ByteZone Logo"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                  display: "block",
+                }}
+              />
             </div>
 
             <span style={{ color: "#fff" }}>Byte</span>
@@ -448,14 +591,36 @@ export default function UserProfile() {
                   }}
                 >
                   {uploading
-                    ? "Uploading profile picture..."
+                    ? "Updating profile picture..."
                     : "Click the icon to upload a new profile picture"}
                 </p>
+
+                {imageUrl && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    disabled={uploading}
+                    style={{
+                      marginTop: "10px",
+                      padding: "8px 14px",
+                      borderRadius: "8px",
+                      border: "1px solid rgba(239,68,68,0.45)",
+                      background: "rgba(239,68,68,0.10)",
+                      color: "#ff9b9b",
+                      fontSize: "12px",
+                      fontWeight: 800,
+                      cursor: uploading ? "not-allowed" : "pointer",
+                      fontFamily: "'Montserrat', sans-serif",
+                    }}
+                  >
+                    Remove Profile Picture
+                  </button>
+                )}
               </div>
 
               <ProfileInput
                 label="Full Name"
-                icon="👤"
+                icon={<UserIcon />}
                 value={form.fullName}
                 onChange={(value) =>
                   setForm((prev) => ({
@@ -467,7 +632,7 @@ export default function UserProfile() {
 
               <ProfileInput
                 label="Email Address"
-                icon="✉️"
+                icon={<MailIcon />}
                 value={form.email}
                 onChange={(value) =>
                   setForm((prev) => ({
@@ -479,10 +644,33 @@ export default function UserProfile() {
 
               <ProfileInput
                 label="Password"
-                icon="🔒"
-                type="password"
+                icon={<LockIcon />}
+                type={showPassword ? "text" : "password"}
                 value={form.password}
                 placeholder="••••••••••••"
+                rightAction={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                    style={{
+                      width: "28px",
+                      height: "28px",
+                      border: "none",
+                      background: "transparent",
+                      color: showPassword ? CYAN : MUTED,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: 0,
+                    }}
+                  >
+                    {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                  </button>
+                }
                 onChange={(value) =>
                   setForm((prev) => ({
                     ...prev,
@@ -530,7 +718,8 @@ function ProfileInput({
   onChange,
   type = "text",
   placeholder = "",
-  icon = "👤",
+  icon = null,
+  rightAction = null,
 }) {
   return (
     <div style={{ marginBottom: "16px" }}>
@@ -566,6 +755,7 @@ function ProfileInput({
             justifyContent: "center",
             fontSize: "15px",
             flexShrink: 0,
+            color: MUTED,
           }}
         >
           {icon}
@@ -584,8 +774,11 @@ function ProfileInput({
             color: "#fff",
             fontFamily: "'Montserrat', sans-serif",
             fontSize: "13px",
+            minWidth: 0,
           }}
         />
+
+        {rightAction}
       </div>
     </div>
   );

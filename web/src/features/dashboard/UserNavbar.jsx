@@ -51,17 +51,27 @@ export default function UserNavbar() {
       >
         <div
           style={{
-            width: "34px",
-            height: "34px",
-            background: `linear-gradient(135deg, ${CYAN}, #0070a8)`,
-            borderRadius: "8px",
+            width: "38px",
+            height: "38px",
+            borderRadius: "10px",
+            overflow: "hidden",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: "16px",
+            background: "transparent",
+            flexShrink: 0,
           }}
         >
-          ⚡
+          <img
+            src="/ByteZoneLogo.png"
+            alt="ByteZone Logo"
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+              display: "block",
+            }}
+          />
         </div>
         <span style={{ color: "#fff" }}>Byte</span>
         <span style={{ color: CYAN }}>Zone</span>

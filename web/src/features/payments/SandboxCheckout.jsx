@@ -18,6 +18,7 @@ export default function SandboxCheckout() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     startProcessing();
@@ -28,13 +29,14 @@ export default function SandboxCheckout() {
     try {
       setLoading(true);
       setError("");
+      setMessage("");
 
       const response = await startSandboxPayment(paymentId);
       setPayment(response.data);
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          "Unable to start sandbox payment processing."
+          "Unable to start sandbox payment processing.",
       );
     } finally {
       setLoading(false);
@@ -45,6 +47,7 @@ export default function SandboxCheckout() {
     try {
       setProcessing(true);
       setError("");
+      setMessage("Recording sandbox result...");
 
       const response = await submitSandboxPaymentResult(paymentId, {
         status,
@@ -53,14 +56,23 @@ export default function SandboxCheckout() {
 
       setPayment(response.data);
 
+      if (status === "PAID") {
+        setMessage("Payment marked as paid successfully.");
+      } else if (status === "FAILED") {
+        setMessage("Sandbox payment failed. You may try again later.");
+      } else if (status === "CANCELLED") {
+        setMessage("Sandbox payment cancelled.");
+      }
+
       setTimeout(() => {
         navigate("/dashboard");
       }, 1200);
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          "Unable to record sandbox payment result."
+          "Unable to record sandbox payment result.",
       );
+      setMessage("");
     } finally {
       setProcessing(false);
     }
@@ -81,20 +93,33 @@ export default function SandboxCheckout() {
     >
       <div
         style={{
-          width: "100%",
-          maxWidth: "520px",
+          width: "min(560px, 100%)",
           background: CARD_BG,
           border: `1px solid ${CYAN}`,
           borderRadius: "18px",
-          padding: "32px",
-          boxShadow: "0 0 40px rgba(57,213,255,0.12)",
+          padding: "28px",
+          boxShadow: "0 24px 80px rgba(0,0,0,0.45)",
         }}
       >
-        <h1 style={{ color: CYAN, fontSize: "26px", marginBottom: "10px" }}>
+        <h1
+          style={{
+            color: CYAN,
+            fontSize: "24px",
+            fontWeight: 900,
+            marginBottom: "10px",
+          }}
+        >
           ByteZone Sandbox Checkout
         </h1>
 
-        <p style={{ color: MUTED, fontSize: "14px", marginBottom: "24px" }}>
+        <p
+          style={{
+            color: MUTED,
+            fontSize: "13px",
+            lineHeight: 1.5,
+            marginBottom: "22px",
+          }}
+        >
           This is a simulated payment gateway for project testing only. No real
           money will be processed.
         </p>
@@ -121,34 +146,89 @@ export default function SandboxCheckout() {
 
             <div
               style={{
-                background: "#111",
-                borderRadius: "12px",
+                background: "#101010",
+                borderRadius: "14px",
                 padding: "18px",
-                marginBottom: "22px",
+                marginBottom: "18px",
+                border: "1px solid #222",
               }}
             >
-              <p style={{ marginBottom: "8px" }}>
-                Payment ID: <strong>{payment?.id || paymentId}</strong>
-              </p>
-              <p style={{ marginBottom: "8px" }}>
-                Type: <strong>{payment?.type || "N/A"}</strong>
-              </p>
-              <p style={{ marginBottom: "8px" }}>
-                Amount:{" "}
+              <div style={checkoutRowStyle}>
+                <span>Payment ID:</span>
+                <strong>#{payment?.id || paymentId}</strong>
+              </div>
+
+              <div style={checkoutRowStyle}>
+                <span>Type:</span>
+                <strong>{payment?.type || "N/A"}</strong>
+              </div>
+
+              <div style={checkoutRowStyle}>
+                <span>Amount:</span>
                 <strong>
-                  ₱{payment?.amount ? Number(payment.amount).toFixed(2) : "0.00"}
+                  ₱
+                  {payment?.amount
+                    ? Number(payment.amount).toFixed(2)
+                    : "0.00"}
                 </strong>
-              </p>
-              <p>
-                Status: <strong style={{ color: CYAN }}>{payment?.status}</strong>
+              </div>
+
+              <div style={checkoutRowStyle}>
+                <span>Status:</span>
+                <strong style={{ color: CYAN }}>
+                  {payment?.status || "N/A"}
+                </strong>
+              </div>
+
+              <div
+                style={{
+                  marginTop: "18px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=BYTEZONE-SANDBOX-PAYMENT-${payment?.id || paymentId}`}
+                  alt="ByteZone Sandbox QR"
+                  style={{
+                    width: "150px",
+                    height: "150px",
+                    background: "#fff",
+                    border: "8px solid #fff",
+                    borderRadius: "12px",
+                    boxShadow: "0 0 0 1px #333",
+                  }}
+                />
+              </div>
+
+              <p
+                style={{
+                  color: MUTED,
+                  fontSize: "12px",
+                  textAlign: "center",
+                  marginTop: "10px",
+                }}
+              >
+                Mock QR Sandbox • Reference: BZ-SANDBOX-
+                {payment?.id || paymentId}
               </p>
             </div>
 
-            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr",
+                gap: "10px",
+              }}
+            >
               <button
                 disabled={processing}
                 onClick={() => submitResult("PAID")}
-                style={buttonStyle("#22c55e")}
+                style={{
+                  ...checkoutButtonStyle,
+                  background: "#22c55e",
+                }}
               >
                 Pay Success
               </button>
@@ -156,7 +236,10 @@ export default function SandboxCheckout() {
               <button
                 disabled={processing}
                 onClick={() => submitResult("FAILED")}
-                style={buttonStyle("#ef4444")}
+                style={{
+                  ...checkoutButtonStyle,
+                  background: "#ef4444",
+                }}
               >
                 Fail Payment
               </button>
@@ -164,15 +247,24 @@ export default function SandboxCheckout() {
               <button
                 disabled={processing}
                 onClick={() => submitResult("CANCELLED")}
-                style={buttonStyle("#6b7280")}
+                style={{
+                  ...checkoutButtonStyle,
+                  background: "#6b7280",
+                }}
               >
                 Cancel
               </button>
             </div>
 
-            {processing && (
-              <p style={{ color: MUTED, marginTop: "18px", fontSize: "14px" }}>
-                Recording sandbox result...
+            {message && (
+              <p
+                style={{
+                  color: message.includes("successfully") ? CYAN : MUTED,
+                  fontSize: "13px",
+                  marginTop: "16px",
+                }}
+              >
+                {message}
               </p>
             )}
           </>
@@ -182,17 +274,22 @@ export default function SandboxCheckout() {
   );
 }
 
-function buttonStyle(background) {
-  return {
-    flex: 1,
-    minWidth: "140px",
-    padding: "12px 14px",
-    background,
-    color: "#fff",
-    border: "none",
-    borderRadius: "10px",
-    fontWeight: 800,
-    cursor: "pointer",
-    fontFamily: "'Montserrat', sans-serif",
-  };
-}
+const checkoutRowStyle = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: "12px",
+  color: "#fff",
+  fontSize: "14px",
+  marginBottom: "10px",
+};
+
+const checkoutButtonStyle = {
+  padding: "14px 12px",
+  border: "none",
+  borderRadius: "10px",
+  color: "#fff",
+  fontWeight: 800,
+  fontSize: "14px",
+  cursor: "pointer",
+  fontFamily: "'Montserrat', sans-serif",
+};

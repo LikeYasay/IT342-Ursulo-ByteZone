@@ -7,6 +7,14 @@ const MUTED = "#8a8f98";
 export default function PublicNavbar() {
   const navigate = useNavigate();
 
+  const goToLandingSection = (sectionId) => {
+    navigate("/", {
+      state: {
+        scrollTo: sectionId,
+      },
+    });
+  };
+
   return (
     <nav
       style={{
@@ -23,7 +31,8 @@ export default function PublicNavbar() {
         zIndex: 100,
       }}
     >
-      <div
+      <button
+        onClick={() => navigate("/")}
         style={{
           display: "flex",
           alignItems: "center",
@@ -31,45 +40,54 @@ export default function PublicNavbar() {
           fontSize: "22px",
           fontWeight: 800,
           letterSpacing: "2px",
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          fontFamily: "'Montserrat', sans-serif",
         }}
       >
         <div
           style={{
-            width: "36px",
-            height: "36px",
-            background: `linear-gradient(135deg, ${CYAN}, #0070a8)`,
-            borderRadius: "8px",
+            width: "38px",
+            height: "38px",
+            borderRadius: "10px",
+            overflow: "hidden",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: "18px",
+            background: "transparent",
+            flexShrink: 0,
           }}
         >
-          ⚡
+          <img
+            src="/ByteZoneLogo.png"
+            alt="ByteZone Logo"
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+              display: "block",
+            }}
+          />
         </div>
         <span style={{ color: "#fff" }}>Byte</span>
         <span style={{ color: CYAN }}>Zone</span>
-      </div>
+      </button>
 
       <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-        {["About", "Games"].map((label) => (
-          <button
-            key={label}
-            style={{
-              padding: "8px 18px",
-              color: MUTED,
-              fontSize: "15px",
-              fontWeight: 500,
-              cursor: "pointer",
-              borderRadius: "8px",
-              background: "transparent",
-              border: "none",
-              fontFamily: "'Montserrat', sans-serif",
-            }}
-          >
-            {label}
-          </button>
-        ))}
+        <button
+          onClick={() => goToLandingSection("what-we-offer")}
+          style={navLinkStyle}
+        >
+          About
+        </button>
+
+        <button
+          onClick={() => goToLandingSection("available-games")}
+          style={navLinkStyle}
+        >
+          Games
+        </button>
       </div>
 
       <div style={{ display: "flex", gap: "10px" }}>
@@ -110,3 +128,15 @@ export default function PublicNavbar() {
     </nav>
   );
 }
+
+const navLinkStyle = {
+  padding: "8px 18px",
+  color: MUTED,
+  fontSize: "15px",
+  fontWeight: 500,
+  cursor: "pointer",
+  borderRadius: "8px",
+  background: "transparent",
+  border: "none",
+  fontFamily: "'Montserrat', sans-serif",
+};

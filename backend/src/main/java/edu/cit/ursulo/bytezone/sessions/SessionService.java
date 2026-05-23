@@ -6,7 +6,6 @@ import edu.cit.ursulo.bytezone.payments.PaymentMethod;
 import edu.cit.ursulo.bytezone.payments.PaymentRepository;
 import edu.cit.ursulo.bytezone.payments.PaymentStatus;
 import edu.cit.ursulo.bytezone.payments.PaymentType;
-import edu.cit.ursulo.bytezone.reservations.Reservation;
 import edu.cit.ursulo.bytezone.reservations.ReservationRepository;
 import edu.cit.ursulo.bytezone.reservations.ReservationStatus;
 import edu.cit.ursulo.bytezone.stations.Station;
@@ -16,8 +15,11 @@ import edu.cit.ursulo.bytezone.users.User;
 import edu.cit.ursulo.bytezone.users.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.math.BigDecimal;
+
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
@@ -97,6 +99,21 @@ public class SessionService {
         CafeSession session = cafeSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("Session not found"));
 
+        if (session.getStatus() == SessionStatus.ENDED) {
+            return session;
+        }
+
+        LocalDateTime actualEndTime = LocalDateTime.now();
+
+        int playedMinutes = calculatePlayedMinutes(session.getStartTime(), actualEndTime);
+
+        User user = userRepository.findById(session.getUser().getId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.addPlayedMinutes(playedMinutes);
+        userRepository.save(user);
+
+        session.setEndTime(actualEndTime);
         session.setStatus(SessionStatus.ENDED);
         CafeSession saved = cafeSessionRepository.save(session);
 
@@ -116,27 +133,50 @@ public class SessionService {
         return saved;
     }
 
-    @Transactional
-    public CafeSession extend(Long sessionId, ExtendSessionRequest request) {
-        CafeSession session = cafeSessionRepository.findById(sessionId)
-                .orElseThrow(() -> new RuntimeException("Session not found"));
-
-        if (session.getStatus() != SessionStatus.ACTIVE) {
-            throw new RuntimeException("Only active sessions can be extended");
+    private int calculatePlayedMinutes(LocalDateTime startTime, LocalDateTime endTime) {
+        if (startTime == null || endTime == null || endTime.isBefore(startTime)) {
+            return 0;
         }
 
-        session.setEndTime(session.getEndTime().plusMinutes(request.getMinutes()));
-        CafeSession saved = cafeSessionRepository.save(session);
+        long playedSeconds = ChronoUnit.SECONDS.between(startTime, endTime);
 
-        Payment payment = new Payment();
-        payment.setUser(saved.getUser());
-        payment.setType(PaymentType.SESSION_EXTENSION);
-        payment.setReferenceId(saved.getId());
-        payment.setAmount(request.getAmount());
-        payment.setStatus(PaymentStatus.INITIATED);
-        payment.setMethod(PaymentMethod.SANDBOX);
-        paymentRepository.save(payment);
+        if (playedSeconds <= 0) {
+            return 0;
+        }
 
-        return saved;
+        return (int) Math.ceil(playedSeconds / 60.0);
     }
+
+    @Transactional
+public CafeSession extend(Long sessionId, ExtendSessionRequest request) {
+    CafeSession session = cafeSessionRepository.findById(sessionId)
+            .orElseThrow(() -> new RuntimeException("Session not found"));
+
+    if (session.getStatus() != SessionStatus.ACTIVE) {
+        throw new RuntimeException("Only active sessions can be extended");
+    }
+
+    session.setEndTime(session.getEndTime().plusMinutes(request.getMinutes()));
+    CafeSession saved = cafeSessionRepository.save(session);
+
+    BigDecimal extensionAmount = request.getAmount();
+
+    if (extensionAmount == null || extensionAmount.compareTo(BigDecimal.ZERO) <= 0) {
+        extensionAmount = new BigDecimal("50.00");
+    }
+
+    Payment payment = new Payment();
+    payment.setUser(saved.getUser());
+    payment.setType(PaymentType.SESSION_EXTENSION);
+    payment.setReferenceId(saved.getId());
+    payment.setAmount(extensionAmount);
+    payment.setStatus(PaymentStatus.PENDING);
+    payment.setMethod(PaymentMethod.SANDBOX);
+
+    Payment savedPayment = paymentRepository.save(payment);
+    savedPayment.setReferenceNo("BZ-EXT-" + savedPayment.getId());
+    paymentRepository.save(savedPayment);
+
+    return saved;
+}
 }

@@ -17,11 +17,21 @@ const NAV_ITEMS = [
   { label: "Extending Time", icon: "⏱️", path: "/admin/extendinghours" },
   { label: "Snacks", icon: "🍔", path: "/admin/snacks" },
   { label: "Orders", icon: "🛒", path: "/admin/orders" },
-  { label: "Transaction History", icon: "💳", path: "/admin/transactionhistory" },
+  {
+    label: "Transaction History",
+    icon: "💳",
+    path: "/admin/transactionhistory",
+  },
   { label: "Pending Payments", icon: "⏳", path: "/admin/pendingpayments" },
 ];
 
-function SidebarItem({ item, activePath, hoveredItem, setHoveredItem, onClick }) {
+function SidebarItem({
+  item,
+  activePath,
+  hoveredItem,
+  setHoveredItem,
+  onClick,
+}) {
   const isActive = activePath === item.path;
   const isHovered = hoveredItem === item.label;
 
@@ -125,17 +135,27 @@ export default function AdminLayout({ title, children }) {
           <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
             <div
               style={{
-                width: "32px",
-                height: "32px",
-                borderRadius: "6px",
-                background: `linear-gradient(135deg, ${CYAN}, #0070a8)`,
+                width: "38px",
+                height: "38px",
+                borderRadius: "10px",
+                overflow: "hidden",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "16px",
+                background: "transparent",
+                flexShrink: 0,
               }}
             >
-              ⚡
+              <img
+                src="/ByteZoneLogo.png"
+                alt="ByteZone Logo"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                  display: "block",
+                }}
+              />
             </div>
 
             <span
