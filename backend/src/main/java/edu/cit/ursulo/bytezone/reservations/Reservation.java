@@ -1,6 +1,5 @@
 package edu.cit.ursulo.bytezone.reservations;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import edu.cit.ursulo.bytezone.stations.Station;
 import edu.cit.ursulo.bytezone.users.User;
@@ -18,8 +17,8 @@ public class Reservation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JsonIgnore
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password"})
+    @ManyToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     private User user;
 
@@ -71,12 +70,20 @@ public class Reservation {
         return date;
     }
 
+    public LocalDate getReservationDate() {
+        return date;
+    }
+
     public LocalTime getStartTime() {
         return startTime;
     }
 
     public Integer getDurationMinutes() {
         return durationMinutes;
+    }
+
+    public Double getDurationHours() {
+        return durationMinutes == null ? null : durationMinutes / 60.0;
     }
 
     public ReservationStatus getStatus() {

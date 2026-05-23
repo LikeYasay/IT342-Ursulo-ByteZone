@@ -232,7 +232,7 @@ export default function UserDashboard() {
   const [announcements, setAnnouncements] = useState([]);
   const [activeNav, setActiveNav] = useState("Home");
   const [gameIdx, setGameIdx] = useState(0);
-  const [hoveredUpdate, setHoveredUpdate] = useState(null);
+
 
   const [user, setUser] = useState(null);
   const [reservations, setReservations] = useState([]);
@@ -319,7 +319,6 @@ export default function UserDashboard() {
     if (label === "Book") navigate("/booking");
     if (label === "Order") navigate("/order");
     if (label === "Transactions") navigate("/transactions");
-    if (label === "Files") navigate("/files");
   };
 
   const handleLogout = () => {
@@ -390,42 +389,6 @@ export default function UserDashboard() {
 
   const latestUnpaidPayment = unpaidPayments[0];
   const pendingPayments = unpaidPayments.length;
-
-  const updates = useMemo(() => {
-    const list = [];
-
-    if (latestReservation) {
-      list.push({
-        title: "Latest Reservation",
-        time: latestReservation.date,
-        detail: `${
-          latestReservation.station?.stationNo || latestReservation.station?.id
-        } • ${latestReservation.status}`,
-      });
-    }
-
-    if (latestOrder) {
-      list.push({
-        title: "Latest Order",
-        time: `Order #${latestOrder.id}`,
-        detail: `${latestOrder.status} • ₱${Number(latestOrder.total).toFixed(
-          2,
-        )}`,
-      });
-    }
-
-    if (latestPayment) {
-      list.push({
-        title: "Latest Payment",
-        time: latestPayment.type,
-        detail: `${latestPayment.status} • ₱${Number(
-          latestPayment.amount,
-        ).toFixed(2)}`,
-      });
-    }
-
-    return list.length > 0 ? list : STATIC_UPDATES;
-  }, [latestOrder, latestPayment, latestReservation]);
 
   const displayName = user?.fullName || "Player";
   const displayInitial = displayName.charAt(0).toUpperCase();
@@ -1077,16 +1040,6 @@ export default function UserDashboard() {
                     icon="💳"
                     onClick={() => navigate("/transactions")}
                   />
-                  <QuickActionBtn
-                    label="Upload Record File"
-                    icon="📎"
-                    onClick={() => navigate("/files")}
-                  />
-                  <QuickActionBtn
-                    label="View Tournaments"
-                    icon="🏆"
-                    onClick={() => {}}
-                  />
                 </div>
               </SectionCard>
             </div>
@@ -1112,105 +1065,98 @@ export default function UserDashboard() {
                       Announcements
                     </h3>
 
-                    {announcements.length === 0 ? (
-                      <p style={{ color: MUTED, fontSize: "13px" }}>
-                        No announcements yet.
-                      </p>
-                    ) : (
-                      announcements.slice(0, 3).map((announcement) => (
-                        <div
-                          key={announcement.id}
-                          style={{
-                            background: INNER_CARD,
-                            borderRadius: "10px",
-                            padding: "12px 14px",
-                            border: "1px solid rgba(57,213,255,0.18)",
-                            marginBottom: "10px",
-                          }}
-                        >
+                    {announcements.length === 0
+                      ? STATIC_UPDATES.map((update) => (
                           <div
+                            key={update.title}
                             style={{
-                              fontSize: "13px",
-                              fontWeight: 800,
-                              color: CYAN,
-                              marginBottom: "4px",
+                              background: INNER_CARD,
+                              borderRadius: "10px",
+                              padding: "12px 14px",
+                              border: "1px solid rgba(57,213,255,0.18)",
+                              marginBottom: "10px",
                             }}
                           >
-                            {announcement.title}
-                          </div>
+                            <div
+                              style={{
+                                fontSize: "13px",
+                                fontWeight: 800,
+                                color: CYAN,
+                                marginBottom: "4px",
+                              }}
+                            >
+                              {update.title}
+                            </div>
 
-                          <div
-                            style={{
-                              fontSize: "12px",
-                              color: "#bbb",
-                              lineHeight: 1.5,
-                            }}
-                          >
-                            {announcement.description}
-                          </div>
+                            <div
+                              style={{
+                                fontSize: "12px",
+                                color: "#bbb",
+                                lineHeight: 1.5,
+                              }}
+                            >
+                              {update.detail}
+                            </div>
 
+                            <div
+                              style={{
+                                fontSize: "11px",
+                                color: "#666",
+                                marginTop: "8px",
+                              }}
+                            >
+                              {update.time}
+                            </div>
+                          </div>
+                        ))
+                      : announcements.slice(0, 3).map((announcement) => (
                           <div
+                            key={announcement.id}
                             style={{
-                              fontSize: "11px",
-                              color: "#666",
-                              marginTop: "8px",
+                              background: INNER_CARD,
+                              borderRadius: "10px",
+                              padding: "12px 14px",
+                              border: "1px solid rgba(57,213,255,0.18)",
+                              marginBottom: "10px",
                             }}
                           >
-                            {announcement.createdAt
-                              ? new Date(
-                                  announcement.createdAt,
-                                ).toLocaleString()
-                              : ""}
+                            <div
+                              style={{
+                                fontSize: "13px",
+                                fontWeight: 800,
+                                color: CYAN,
+                                marginBottom: "4px",
+                              }}
+                            >
+                              {announcement.title}
+                            </div>
+
+                            <div
+                              style={{
+                                fontSize: "12px",
+                                color: "#bbb",
+                                lineHeight: 1.5,
+                              }}
+                            >
+                              {announcement.description}
+                            </div>
+
+                            <div
+                              style={{
+                                fontSize: "11px",
+                                color: "#666",
+                                marginTop: "8px",
+                              }}
+                            >
+                              {announcement.createdAt
+                                ? new Date(
+                                    announcement.createdAt,
+                                  ).toLocaleString()
+                                : ""}
+                            </div>
                           </div>
-                        </div>
-                      ))
-                    )}
+                        ))}
                   </div>
-
-                  {updates.map((update, i) => (
-                    <div
-                      key={`${update.title}-${i}`}
-                      onMouseEnter={() => setHoveredUpdate(i)}
-                      onMouseLeave={() => setHoveredUpdate(null)}
-                      style={{
-                        background: INNER_CARD,
-                        borderRadius: "10px",
-                        padding: "12px 14px",
-                        border: `1px solid ${
-                          hoveredUpdate === i ? CYAN : "transparent"
-                        }`,
-                        transition: "border-color 0.2s, transform 0.2s",
-                        transform:
-                          hoveredUpdate === i ? "translateX(3px)" : "none",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: "13px",
-                          fontWeight: 700,
-                          color: CYAN,
-                          marginBottom: "4px",
-                        }}
-                      >
-                        {update.title}
-                      </div>
-
-                      <div
-                        style={{
-                          fontSize: "11px",
-                          color: "#bbb",
-                          marginBottom: "3px",
-                        }}
-                      >
-                        {update.time}
-                      </div>
-
-                      <div style={{ fontSize: "11px", color: "#888" }}>
-                        {update.detail}
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </SectionCard>
             </div>

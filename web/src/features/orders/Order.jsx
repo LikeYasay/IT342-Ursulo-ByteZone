@@ -412,12 +412,13 @@ export default function Order() {
       setUser(userRes.data);
       localStorage.setItem("user", JSON.stringify(userRes.data));
 
-      const mappedSnacks = (snackRes.data || []).map((item) => ({
-        ...item,
-        available: item.available ?? item.isAvailable ?? true,
-        emoji: getEmoji(item.name),
-        // imageUrl already present from backend; emoji is fallback
-      }));
+      const mappedSnacks = (snackRes.data || [])
+        .map((item) => ({
+          ...item,
+          available: item.available ?? item.isAvailable ?? true,
+          emoji: getEmoji(item.name),
+        }))
+        .filter((item) => item.available === true);
 
       setSnacks(mappedSnacks);
       setOrders(orderRes.data || []);

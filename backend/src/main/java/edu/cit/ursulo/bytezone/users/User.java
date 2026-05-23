@@ -1,5 +1,6 @@
 package edu.cit.ursulo.bytezone.users;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -19,6 +20,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String password;
 
@@ -76,7 +78,7 @@ public class User {
     }
 
     public String getProfileImageUrl() {
-    return profileImageUrl;
+        return profileImageUrl;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -108,7 +110,7 @@ public class User {
     }
 
     public void setProfileImageUrl(String profileImageUrl) {
-    this.profileImageUrl = profileImageUrl;
+        this.profileImageUrl = profileImageUrl;
     }
 
     public void setCreatedAt(LocalDateTime createdAt) {

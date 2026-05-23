@@ -358,25 +358,8 @@ export default function AdminSnacks() {
               ) : (
                 filteredSnacks.map((snack) => (
                   <tr key={snack.id} style={{ borderBottom: "1px solid #222" }}>
-                    <td style={tdStyle}>
-                      <strong style={{ color: "#fff" }}>{snack.name}</strong>
-                    </td>
+                    <td style={tdStyle}>#{snack.id}</td>
 
-                    <td style={tdStyle}>
-                      <span
-                        style={{
-                          ...pillStyle,
-                          color: CYAN,
-                          background: "rgba(57,213,255,0.12)",
-                        }}
-                      >
-                        {snack.category || "Recommended Offers"}
-                      </span>
-                    </td>
-
-                    <td style={tdStyle}>
-                      ₱{Number(snack.price || 0).toFixed(2)}
-                    </td>
                     <td style={{ ...tdStyle, width: "72px" }}>
                       {snack.imageUrl ? (
                         <img
@@ -408,12 +391,27 @@ export default function AdminSnacks() {
                         </div>
                       )}
                     </td>
+
                     <td style={tdStyle}>
                       <strong style={{ color: "#fff" }}>{snack.name}</strong>
                     </td>
+
+                    <td style={tdStyle}>
+                      <span
+                        style={{
+                          ...pillStyle,
+                          color: CYAN,
+                          background: "rgba(57,213,255,0.12)",
+                        }}
+                      >
+                        {snack.category || "Recommended Offers"}
+                      </span>
+                    </td>
+
                     <td style={tdStyle}>
                       ₱{Number(snack.price || 0).toFixed(2)}
                     </td>
+
                     <td style={tdStyle}>
                       <span
                         style={{
@@ -427,8 +425,15 @@ export default function AdminSnacks() {
                         {snack.available ? "AVAILABLE" : "UNAVAILABLE"}
                       </span>
                     </td>
+
                     <td style={tdStyle}>
-                      <div style={{ display: "flex", gap: "8px" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "8px",
+                          flexWrap: "wrap",
+                        }}
+                      >
                         <button
                           disabled={saving}
                           onClick={() => startEdit(snack)}
@@ -519,6 +524,6 @@ const thStyle = {
 const tdStyle = {
   padding: "12px",
   color: "#ddd",
-  verticalAlign: "top",
-  whiteSpace: "nowrap",
+  verticalAlign: "middle",
+  whiteSpace: "normal",
 };
