@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -31,6 +32,12 @@ public class SessionService {
     private final PaymentRepository paymentRepository;
     private final CurrentUserService currentUserService;
     private final ReservationRepository reservationRepository;
+
+    private static final ZoneId APP_ZONE = ZoneId.of("Asia/Manila");
+
+    private LocalDateTime now() {
+        return LocalDateTime.now(APP_ZONE);
+    }
 
     public SessionService(CafeSessionRepository cafeSessionRepository,
                           StationRepository stationRepository,
@@ -84,8 +91,10 @@ public class SessionService {
         CafeSession session = new CafeSession();
         session.setStation(station);
         session.setUser(user);
-        session.setStartTime(LocalDateTime.now());
-        session.setEndTime(LocalDateTime.now().plusMinutes(request.getDurationMinutes()));
+        LocalDateTime startTime = now();
+
+        session.setStartTime(startTime);
+        session.setEndTime(startTime.plusMinutes(request.getDurationMinutes()));
         session.setStatus(SessionStatus.ACTIVE);
 
         station.setStatus(StationStatus.IN_USE);
@@ -103,7 +112,7 @@ public class SessionService {
             return session;
         }
 
-        LocalDateTime actualEndTime = LocalDateTime.now();
+        LocalDateTime actualEndTime = now();
 
         int playedMinutes = calculatePlayedMinutes(session.getStartTime(), actualEndTime);
 
