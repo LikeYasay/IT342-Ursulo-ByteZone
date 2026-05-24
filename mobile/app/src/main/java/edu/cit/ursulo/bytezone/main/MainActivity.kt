@@ -17,6 +17,7 @@ import edu.cit.ursulo.bytezone.orders.OrdersFragment
 import edu.cit.ursulo.bytezone.payments.TransactionHistoryFragment
 import edu.cit.ursulo.bytezone.profile.ProfileFragment
 import edu.cit.ursulo.bytezone.shared.api.RetrofitClient
+import edu.cit.ursulo.bytezone.shared.utils.ErrorUtils
 import edu.cit.ursulo.bytezone.shared.utils.UiUtils
 import kotlinx.coroutines.launch
 
@@ -101,7 +102,7 @@ class MainActivity : AppCompatActivity() {
                     profileImageUrl = user.profileImageUrl
                 )
             } catch (e: Exception) {
-                UiUtils.longToast(this@MainActivity, "Unable to verify session: ${e.message}")
+                UiUtils.longToast(this@MainActivity, ErrorUtils.CONNECTION_ERROR_MESSAGE)
             }
         }
     }

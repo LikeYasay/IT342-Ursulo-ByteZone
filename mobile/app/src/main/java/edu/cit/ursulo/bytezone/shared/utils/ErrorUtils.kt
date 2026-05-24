@@ -4,6 +4,9 @@ import org.json.JSONObject
 import retrofit2.Response
 
 object ErrorUtils {
+    const val CONNECTION_ERROR_MESSAGE =
+        "Cannot connect to ByteZone server. Please check backend URL or internet connection."
+
     fun parseError(response: Response<*>): String {
         return try {
             val raw = response.errorBody()?.string()

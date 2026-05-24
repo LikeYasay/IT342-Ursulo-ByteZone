@@ -24,6 +24,7 @@ import edu.cit.ursulo.bytezone.shared.api.SnackDto
 import edu.cit.ursulo.bytezone.shared.api.SnackOrderDto
 import edu.cit.ursulo.bytezone.shared.api.StationDto
 import edu.cit.ursulo.bytezone.shared.utils.DateTimeUtils
+import edu.cit.ursulo.bytezone.shared.utils.ErrorUtils
 import edu.cit.ursulo.bytezone.shared.utils.ImageLoader
 import edu.cit.ursulo.bytezone.shared.utils.UiUtils
 import kotlinx.coroutines.launch
@@ -85,7 +86,7 @@ class OrdersFragment : Fragment() {
                 renderCart()
                 renderLatestOrder(orders.firstOrNull())
             } catch (e: Exception) {
-                UiUtils.longToast(requireActivity(), "Failed to load snack menu: ${e.message}")
+                UiUtils.longToast(requireActivity(), ErrorUtils.CONNECTION_ERROR_MESSAGE)
             }
         }
     }
@@ -270,7 +271,7 @@ class OrdersFragment : Fragment() {
                     UiUtils.longToast(requireActivity(), UiUtils.errorFrom(response))
                 }
             } catch (e: Exception) {
-                UiUtils.longToast(requireActivity(), "Failed to place order: ${e.message}")
+                UiUtils.longToast(requireActivity(), ErrorUtils.CONNECTION_ERROR_MESSAGE)
             } finally {
                 binding.btnConfirmOrder.isEnabled = true
                 binding.btnConfirmOrder.text = "Confirm Order"
@@ -316,7 +317,7 @@ class OrdersFragment : Fragment() {
         return Button(requireContext()).apply {
             text = label
             textSize = 16f
-            setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
             setBackgroundResource(R.drawable.bg_auth_button)
             minWidth = 0
             minHeight = 0

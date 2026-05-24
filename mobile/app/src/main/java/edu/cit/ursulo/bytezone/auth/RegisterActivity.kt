@@ -88,7 +88,7 @@ class RegisterActivity : AppCompatActivity() {
                     Toast.makeText(this@RegisterActivity, ErrorUtils.parseError(response), Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@RegisterActivity, "Connection error: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@RegisterActivity, ErrorUtils.CONNECTION_ERROR_MESSAGE, Toast.LENGTH_LONG).show()
             } finally {
                 binding.btnRegister.isEnabled = true
                 binding.btnRegister.text = "Create account"
@@ -121,11 +121,14 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun startGoogleSignIn() {
-        // Configure the Android OAuth client and Google Identity Services here.
-        // Reuse AuthApiService.googleLogin with the returned ID token.
+        // Android Google login needs a Google Cloud Android OAuth client ID configured
+        // with this app package (edu.cit.ursulo.bytezone) and the release/debug SHA-1.
+        // Once Google Identity Services returns an ID token, send it through
+        // AuthApiService.googleLogin to exchange it at backend /api/auth/google.
+        // Do not hardcode private client secrets in the Android app.
         Toast.makeText(
             this,
-            "Google sign-in UI is ready. Add Android OAuth client setup to enable token exchange.",
+            "Google login is not configured yet for Android. Please use email login for now.",
             Toast.LENGTH_LONG
         ).show()
     }

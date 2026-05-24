@@ -81,7 +81,7 @@ class LoginActivity : AppCompatActivity() {
                     Toast.makeText(this@LoginActivity, ErrorUtils.parseError(response), Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@LoginActivity, "Connection error: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@LoginActivity, ErrorUtils.CONNECTION_ERROR_MESSAGE, Toast.LENGTH_LONG).show()
             } finally {
                 binding.btnLogin.isEnabled = true
                 binding.btnLogin.text = "Sign in"
@@ -134,11 +134,14 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun startGoogleLogin() {
-        // Configure Google Identity Services or Google Sign-In in the Android project,
-        // then pass the returned ID token to exchangeGoogleIdToken(idToken).
+        // Android Google login needs a Google Cloud Android OAuth client ID configured
+        // with this app package (edu.cit.ursulo.bytezone) and the release/debug SHA-1.
+        // Once the ID token is returned by Google Identity Services, pass it to
+        // exchangeGoogleIdToken(idToken), which posts to the backend /api/auth/google
+        // endpoint and stores the ByteZone JWT. Do not hardcode private secrets here.
         Toast.makeText(
             this,
-            "Google sign-in UI is ready. Add Android OAuth client setup to enable token exchange.",
+            "Google login is not configured yet for Android. Please use email login for now.",
             Toast.LENGTH_LONG
         ).show()
     }
@@ -153,7 +156,7 @@ class LoginActivity : AppCompatActivity() {
                     Toast.makeText(this@LoginActivity, ErrorUtils.parseError(response), Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@LoginActivity, "Google login failed: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@LoginActivity, ErrorUtils.CONNECTION_ERROR_MESSAGE, Toast.LENGTH_LONG).show()
             }
         }
     }

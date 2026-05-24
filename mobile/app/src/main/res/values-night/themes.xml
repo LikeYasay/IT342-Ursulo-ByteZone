@@ -1,7 +1,12 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.ByteZone" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="colorPrimary">@color/bytezone_cyan</item>
+        <item name="colorSecondary">@color/bytezone_blue</item>
+        <item name="android:windowBackground">@drawable/bg_app</item>
+        <item name="android:navigationBarColor">#1B1B1B</item>
+        <item name="android:statusBarColor">#0A0A0F</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 </resources>

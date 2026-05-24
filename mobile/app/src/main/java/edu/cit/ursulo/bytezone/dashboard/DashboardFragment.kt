@@ -25,6 +25,7 @@ import edu.cit.ursulo.bytezone.shared.api.RetrofitClient
 import edu.cit.ursulo.bytezone.shared.api.SnackOrderDto
 import edu.cit.ursulo.bytezone.shared.api.UserDto
 import edu.cit.ursulo.bytezone.shared.utils.DateTimeUtils
+import edu.cit.ursulo.bytezone.shared.utils.ErrorUtils
 import edu.cit.ursulo.bytezone.shared.utils.ImageLoader
 import edu.cit.ursulo.bytezone.shared.utils.UiUtils
 import kotlinx.coroutines.Job
@@ -106,7 +107,7 @@ class DashboardFragment : Fragment() {
                 renderActivityMeta(session, reservations, orders, payments)
             } catch (e: Exception) {
                 if (showErrors) {
-                    UiUtils.longToast(requireActivity(), "Failed to load dashboard: ${e.message}")
+                    UiUtils.longToast(requireActivity(), ErrorUtils.CONNECTION_ERROR_MESSAGE)
                 }
             }
 

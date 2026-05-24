@@ -14,6 +14,7 @@ import edu.cit.ursulo.bytezone.databinding.FragmentNotificationsBinding
 import edu.cit.ursulo.bytezone.shared.api.NotificationDto
 import edu.cit.ursulo.bytezone.shared.api.RetrofitClient
 import edu.cit.ursulo.bytezone.shared.utils.DateTimeUtils
+import edu.cit.ursulo.bytezone.shared.utils.ErrorUtils
 import edu.cit.ursulo.bytezone.shared.utils.UiUtils
 import kotlinx.coroutines.launch
 
@@ -52,7 +53,7 @@ class NotificationsFragment : Fragment() {
                 binding.tvUnreadCount.text = "Unread: $unread"
                 renderNotifications(notifications)
             } catch (e: Exception) {
-                UiUtils.longToast(requireActivity(), "Failed to load notifications: ${e.message}")
+                UiUtils.longToast(requireActivity(), ErrorUtils.CONNECTION_ERROR_MESSAGE)
             }
         }
     }

@@ -22,6 +22,7 @@ import edu.cit.ursulo.bytezone.shared.api.ReservationDto
 import edu.cit.ursulo.bytezone.shared.api.RetrofitClient
 import edu.cit.ursulo.bytezone.shared.api.StationDto
 import edu.cit.ursulo.bytezone.shared.utils.DateTimeUtils
+import edu.cit.ursulo.bytezone.shared.utils.ErrorUtils
 import edu.cit.ursulo.bytezone.shared.utils.UiUtils
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -97,7 +98,7 @@ class BookingFragment : Fragment() {
                 renderStations()
                 renderLatestReservation(reservations.firstOrNull())
             } catch (e: Exception) {
-                UiUtils.longToast(requireActivity(), "Failed to load booking data: ${e.message}")
+                UiUtils.longToast(requireActivity(), ErrorUtils.CONNECTION_ERROR_MESSAGE)
             }
         }
     }
@@ -189,7 +190,7 @@ class BookingFragment : Fragment() {
                     UiUtils.longToast(requireActivity(), UiUtils.errorFrom(response))
                 }
             } catch (e: Exception) {
-                UiUtils.longToast(requireActivity(), "Booking failed: ${e.message}")
+                UiUtils.longToast(requireActivity(), ErrorUtils.CONNECTION_ERROR_MESSAGE)
             } finally {
                 binding.btnConfirmBooking.isEnabled = true
                 binding.btnConfirmBooking.text = "Confirm Booking"

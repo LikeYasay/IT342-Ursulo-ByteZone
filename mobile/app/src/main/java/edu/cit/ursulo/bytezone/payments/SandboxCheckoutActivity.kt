@@ -7,6 +7,7 @@ import edu.cit.ursulo.bytezone.databinding.ActivitySandboxCheckoutBinding
 import edu.cit.ursulo.bytezone.shared.api.PaymentDto
 import edu.cit.ursulo.bytezone.shared.api.RetrofitClient
 import edu.cit.ursulo.bytezone.shared.utils.DateTimeUtils
+import edu.cit.ursulo.bytezone.shared.utils.ErrorUtils
 import edu.cit.ursulo.bytezone.shared.utils.UiUtils
 import kotlinx.coroutines.launch
 
@@ -51,7 +52,7 @@ class SandboxCheckoutActivity : AppCompatActivity() {
                     finish()
                 }
             } catch (e: Exception) {
-                UiUtils.longToast(this@SandboxCheckoutActivity, "Unable to start payment: ${e.message}")
+                UiUtils.longToast(this@SandboxCheckoutActivity, ErrorUtils.CONNECTION_ERROR_MESSAGE)
                 finish()
             } finally {
                 setButtonsEnabled(true)
@@ -84,7 +85,7 @@ class SandboxCheckoutActivity : AppCompatActivity() {
                     UiUtils.longToast(this@SandboxCheckoutActivity, UiUtils.errorFrom(response))
                 }
             } catch (e: Exception) {
-                UiUtils.longToast(this@SandboxCheckoutActivity, "Payment update failed: ${e.message}")
+                UiUtils.longToast(this@SandboxCheckoutActivity, ErrorUtils.CONNECTION_ERROR_MESSAGE)
             } finally {
                 setButtonsEnabled(true)
             }

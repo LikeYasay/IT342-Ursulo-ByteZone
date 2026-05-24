@@ -18,6 +18,7 @@ import edu.cit.ursulo.bytezone.auth.SessionManager
 import edu.cit.ursulo.bytezone.databinding.FragmentProfileBinding
 import edu.cit.ursulo.bytezone.shared.api.RetrofitClient
 import edu.cit.ursulo.bytezone.shared.api.UserDto
+import edu.cit.ursulo.bytezone.shared.utils.ErrorUtils
 import edu.cit.ursulo.bytezone.shared.utils.ImageLoader
 import edu.cit.ursulo.bytezone.shared.utils.UiUtils
 import kotlinx.coroutines.launch
@@ -88,7 +89,7 @@ class ProfileFragment : Fragment() {
                     UiUtils.longToast(requireActivity(), UiUtils.errorFrom(response))
                 }
             } catch (e: Exception) {
-                UiUtils.longToast(requireActivity(), "Failed to load profile: ${e.message}")
+                UiUtils.longToast(requireActivity(), ErrorUtils.CONNECTION_ERROR_MESSAGE)
             }
         }
     }
@@ -155,7 +156,7 @@ class ProfileFragment : Fragment() {
                     UiUtils.longToast(requireActivity(), UiUtils.errorFrom(response))
                 }
             } catch (e: Exception) {
-                UiUtils.longToast(requireActivity(), "Profile update failed: ${e.message}")
+                UiUtils.longToast(requireActivity(), ErrorUtils.CONNECTION_ERROR_MESSAGE)
             } finally {
                 binding.btnSaveProfile.isEnabled = true
                 binding.btnSaveProfile.text = "Update Profile"
@@ -187,7 +188,7 @@ class ProfileFragment : Fragment() {
                     bindUser(currentUser ?: return@launch)
                 }
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Image upload failed: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), ErrorUtils.CONNECTION_ERROR_MESSAGE, Toast.LENGTH_LONG).show()
                 currentUser?.let { bindUser(it) }
             } finally {
                 binding.btnPickProfileImage.isEnabled = true
@@ -208,7 +209,7 @@ class ProfileFragment : Fragment() {
                     UiUtils.longToast(requireActivity(), UiUtils.errorFrom(response))
                 }
             } catch (e: Exception) {
-                UiUtils.longToast(requireActivity(), "Failed to remove profile picture: ${e.message}")
+                UiUtils.longToast(requireActivity(), ErrorUtils.CONNECTION_ERROR_MESSAGE)
             }
         }
     }

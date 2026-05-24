@@ -2,19 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000">
-
-    <View
-        android:layout_width="230dp"
-        android:layout_height="230dp"
-        android:layout_gravity="top|start"
-        android:background="@drawable/bg_glow_left" />
-
-    <View
-        android:layout_width="240dp"
-        android:layout_height="240dp"
-        android:layout_gravity="bottom|end"
-        android:background="@drawable/bg_glow_bottom" />
+    android:background="@drawable/bg_app">
 
     <ScrollView
         android:layout_width="match_parent"
@@ -32,23 +20,35 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginHorizontal="3dp"
                 android:layout_marginVertical="24dp"
                 android:background="@drawable/bg_auth_card"
                 android:elevation="8dp"
                 android:orientation="vertical"
-                android:paddingStart="24dp"
-                android:paddingTop="34dp"
-                android:paddingEnd="24dp"
-                android:paddingBottom="28dp">
+                android:paddingStart="25dp"
+                android:paddingTop="18dp"
+                android:paddingEnd="25dp"
+                android:paddingBottom="24dp">
+
+                <ImageView
+                    android:layout_width="70dp"
+                    android:layout_height="70dp"
+                    android:layout_gravity="center_horizontal"
+                    android:background="@drawable/bg_logo_circle"
+                    android:contentDescription="ByteZone logo"
+                    android:padding="15dp"
+                    android:src="@drawable/bytezone_logo" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="15dp"
                     android:text="Create your account"
                     android:textColor="#FFFFFF"
                     android:textSize="24sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-medium" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -56,8 +56,8 @@
                     android:layout_gravity="center_horizontal"
                     android:layout_marginTop="8dp"
                     android:text="Please enter your details to sign up"
-                    android:textColor="#9BA3AF"
-                    android:textSize="15sp" />
+                    android:textColor="#AAAAAA"
+                    android:textSize="14sp" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -235,8 +235,9 @@
                     android:text="Create account"
                     android:textAllCaps="false"
                     android:textColor="#FFFFFF"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-medium" />
 
                 <Button
                     android:id="@+id/btnGoogleRegister"
