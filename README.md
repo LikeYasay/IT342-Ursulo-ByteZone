@@ -1,85 +1,34 @@
-ByteZone is a full-stack computer café management system that centralizes station reservations, session timing, snack ordering, announcements, payment tracking, and transaction history in one platform. It supports User, Staff, and Admin roles, with a Spring Boot + MySQL backend, React web app, and Android Kotlin mobile app to improve café operations and customer experience.
+# ByteZone
 
-## 🛠 Git Workflow (Best Practices)
+ByteZone is a computer café management system developed for **IT342 - System Integration and Architecture**. It centralizes user accounts, station booking, station session timing, snack ordering, payment tracking, announcements, notifications, transaction history, and staff/admin operations in one integrated system.
 
-### 1. Check Current Status
-```bash
-git status
-```
+The system includes a deployed **Spring Boot backend**, a **React web application**, a **Supabase PostgreSQL database**, and an **Android Kotlin mobile application** connected to the same backend.
 
-### 2. Update Local Main
-```bash
-git checkout main
-git pull origin main
-```
+---
 
-### 3. Create a New Branch
-```bash
-git checkout -b feature/your-feature-name
-```
-Examples:
-- feature/user-accounts
-- feature/ui-redesign
-- fix/logout-bug
+## Project Information
 
-Follow the branch naming convention below:
+| Field | Details |
+|---|---|
+| Project Name | ByteZone |
+| Domain | Computer Café Management System |
+| Course | IT342 - System Integration and Architecture |
+| Developer | Ursulo, Lichael Yashua E. |
+| Backend | Java 17, Spring Boot, Spring Security, JWT, JPA/Hibernate |
+| Web Frontend | ReactJS + Vite |
+| Mobile App | Android Kotlin XML, Retrofit, API 34 |
+| Database | Supabase PostgreSQL |
+| Backend Deployment | Render |
+| Web Deployment | Vercel |
+| Image/File Storage | Cloudinary |
+| Email Service | SMTP / Gmail App Password |
+| Public API | RAWG Video Games API |
 
-```bash
-main task/module/short description
-```
+---
 
-Main Task Types:
+## Deployed Links
 
-| Task Type | Prefix |
-|------------|----------|
-| Technical | tech |
-| Feature | feature |
-| Bug Fix | fix |
-| Setup | setup |
+### Web Frontend
 
-Examples:
-- git branch feature/login/create_login_ui  
-- git branch tech/login/change_library  
-- git branch fix/login/color_of_button  
-- git branch setup/login/auth_library  
-
-### 4. Stage & Commit Changes
-```bash
-git add .
-git commit -m "feature(login): create login ui"
-```
-
-Commit Using Proper Format:
-
-```bash
-main task(module): short description
-```
-
-Examples:
-- git commit -m "feature(login): create login ui"  
-- git commit -m "tech(login): change library"  
-- git commit -m "fix(login): color of the button"  
-- git commit -m "setup(login): authentication library"  
-
-### 5. Push Branch to GitHub
-```bash
-git push origin feature/your-feature-name
-```
-
-### 6. Open Pull Request (PR) on GitHub
-- Compare your branch → main  
-- Add description  
-- Request review and merge once approved  
-
-### 7. Sync After Merge
-```bash
-git checkout main
-git pull origin main
-```
-
-### 8. Clean Up Old Branches (Optional)
-```bash
-git branch -d feature/your-feature-name                  # delete locally
-git push origin --delete feature/your-feature-name       # delete on GitHub
-```
-
+```text
+https://it-342-ursulo-byte-zone.vercel.app
