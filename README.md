@@ -31,7 +31,6 @@ This project was developed for **IT342 - System Integration and Architecture**.
 
 ```text
 https://it-342-ursulo-byte-zone.vercel.app
-
 ````
 
 ### Backend API
