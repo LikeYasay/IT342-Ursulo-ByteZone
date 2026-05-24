@@ -13,6 +13,7 @@ This project was developed for **IT342 - System Integration and Architecture**.
 | Project Name | ByteZone |
 | Domain | Computer Café Management System |
 | Course | IT342 - System Integration and Architecture |
+| Instructor | Mr. Frederick L. Revilleza Jr. |
 | Developer | Ursulo, Lichael Yashua E. |
 | Course and Year | BSIT - 3 |
 | Section | G1 |
