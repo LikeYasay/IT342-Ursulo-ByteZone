@@ -110,7 +110,9 @@ class BookingFragment : Fragment() {
                 renderStations()
                 renderLatestReservation(reservations.firstOrNull())
             } catch (e: Exception) {
-                UiUtils.longToast(requireActivity(), ErrorUtils.CONNECTION_ERROR_MESSAGE)
+                stations = emptyList()
+                renderStations()
+                renderLatestReservation(null)
             }
         }
     }
@@ -173,9 +175,9 @@ class BookingFragment : Fragment() {
             setPadding(dp(6), dp(8), dp(6), dp(8))
             setBackgroundResource(
                 when {
-                    selected -> R.drawable.bg_card_selected
-                    available -> R.drawable.bg_card_subtle
-                    else -> R.drawable.bg_card_disabled
+                    selected -> R.drawable.bg_legend_selected
+                    available -> R.drawable.bg_legend_available
+                    else -> R.drawable.bg_legend_unavailable
                 }
             )
             layoutParams = GridLayout.LayoutParams().apply {
@@ -195,7 +197,8 @@ class BookingFragment : Fragment() {
             }
         }
 
-        val name = text(station.stationNo ?: "S${station.id}", 14, R.color.white, true).apply {
+        val selectedTextColor = if (selected) R.color.black else R.color.white
+        val name = text(station.stationNo ?: "S${station.id}", 14, selectedTextColor, true).apply {
             gravity = android.view.Gravity.CENTER
             maxLines = 1
         }
@@ -209,7 +212,11 @@ class BookingFragment : Fragment() {
                 else -> station.status ?: "N/A"
             },
             10,
-            if (available || selected) R.color.bytezone_cyan else R.color.bytezone_muted,
+            when {
+                selected -> R.color.black
+                available -> R.color.bytezone_cyan
+                else -> R.color.bytezone_muted
+            },
             true
         ).apply {
             gravity = android.view.Gravity.CENTER

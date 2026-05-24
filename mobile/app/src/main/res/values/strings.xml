@@ -1,5 +1,11 @@
 <resources>
     <string name="app_name">ByteZone</string>
-    <!-- Set this to the Google OAuth client ID that the backend accepts for /api/auth/google. -->
-    <string name="google_server_client_id"></string>
+    <!--
+        Google Sign-In setup:
+        1. Create an Android OAuth client for package edu.cit.ursulo.bytezone.
+        2. Register the debug/release SHA-1 and SHA-256 fingerprints in Google Cloud.
+        3. Use the Web OAuth Client ID below when requesting the Google ID token.
+        4. Render backend GOOGLE_CLIENT_ID must match this Web Client ID audience.
+    -->
+    <string name="google_server_client_id" translatable="false">639574471490-nf080r4gm7nclgqavvtd67upu6hlrsis.apps.googleusercontent.com</string>
 </resources>

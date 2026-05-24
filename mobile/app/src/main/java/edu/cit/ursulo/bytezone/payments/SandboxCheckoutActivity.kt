@@ -1,8 +1,12 @@
 package edu.cit.ursulo.bytezone.payments
 
 import android.os.Bundle
+import android.view.View
+import android.widget.GridLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import edu.cit.ursulo.bytezone.R
 import edu.cit.ursulo.bytezone.databinding.ActivitySandboxCheckoutBinding
 import edu.cit.ursulo.bytezone.shared.api.PaymentDto
 import edu.cit.ursulo.bytezone.shared.api.RetrofitClient
@@ -97,8 +101,64 @@ class SandboxCheckoutActivity : AppCompatActivity() {
         binding.tvPaymentType.text = "Type: ${payment.type ?: "N/A"}"
         binding.tvPaymentAmount.text = "Amount: ${DateTimeUtils.formatCurrency(payment.amount)}"
         binding.tvPaymentStatus.text = "Status: ${payment.status ?: "N/A"}"
-        binding.tvPaymentReference.text = "Reference: ${payment.referenceNo ?: "BZ-SANDBOX-${payment.id ?: paymentId}"}"
-        binding.tvQrPlaceholder.text = "BYTEZONE\nSANDBOX\n#${payment.id ?: paymentId}"
+        val reference = payment.referenceNo ?: "BZ-SANDBOX-${payment.id ?: paymentId}"
+        binding.tvPaymentReference.text = "Reference: $reference"
+        binding.tvQrReference.text = "Mock QR Sandbox - Reference: $reference"
+        renderMockQr((payment.id ?: paymentId).toInt())
+    }
+
+    private fun renderMockQr(seed: Int) {
+        val size = 15
+        val cellSize = dp(10)
+        binding.qrGrid.removeAllViews()
+
+        for (row in 0 until size) {
+            for (col in 0 until size) {
+                val dark = isFinder(row, col) ||
+                    ((row * 31 + col * 17 + seed) % 7 in 0..2 && !isFinderBorder(row, col))
+                val cell = View(this).apply {
+                    setBackgroundColor(
+                        ContextCompat.getColor(
+                            this@SandboxCheckoutActivity,
+                            if (dark) R.color.black else R.color.white
+                        )
+                    )
+                    layoutParams = GridLayout.LayoutParams(
+                        GridLayout.spec(row),
+                        GridLayout.spec(col)
+                    ).apply {
+                        width = cellSize
+                        height = cellSize
+                    }
+                }
+                binding.qrGrid.addView(cell)
+            }
+        }
+    }
+
+    private fun isFinder(row: Int, col: Int): Boolean {
+        return finderBlock(row, col, 0, 0) ||
+            finderBlock(row, col, 0, 10) ||
+            finderBlock(row, col, 10, 0)
+    }
+
+    private fun isFinderBorder(row: Int, col: Int): Boolean {
+        return finderArea(row, col, 0, 0) ||
+            finderArea(row, col, 0, 10) ||
+            finderArea(row, col, 10, 0)
+    }
+
+    private fun finderArea(row: Int, col: Int, top: Int, left: Int): Boolean {
+        return row in top until top + 5 && col in left until left + 5
+    }
+
+    private fun finderBlock(row: Int, col: Int, top: Int, left: Int): Boolean {
+        if (!finderArea(row, col, top, left)) return false
+        val localRow = row - top
+        val localCol = col - left
+        val border = localRow == 0 || localRow == 4 || localCol == 0 || localCol == 4
+        val center = localRow in 2..2 && localCol in 2..2
+        return border || center
     }
 
     private fun setButtonsEnabled(enabled: Boolean) {
@@ -106,4 +166,6 @@ class SandboxCheckoutActivity : AppCompatActivity() {
         binding.btnFailPayment.isEnabled = enabled
         binding.btnCancelPayment.isEnabled = enabled
     }
+
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 }

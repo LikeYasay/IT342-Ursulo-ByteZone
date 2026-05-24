@@ -18,7 +18,6 @@ import edu.cit.ursulo.bytezone.databinding.FragmentTransactionsBinding
 import edu.cit.ursulo.bytezone.shared.api.PaymentDto
 import edu.cit.ursulo.bytezone.shared.api.RetrofitClient
 import edu.cit.ursulo.bytezone.shared.utils.DateTimeUtils
-import edu.cit.ursulo.bytezone.shared.utils.ErrorUtils
 import edu.cit.ursulo.bytezone.shared.utils.UiUtils
 import kotlinx.coroutines.launch
 
@@ -66,7 +65,8 @@ class TransactionHistoryFragment : Fragment() {
                 payments = api.myPayments().body()?.data.orEmpty()
                 renderPayments()
             } catch (e: Exception) {
-                UiUtils.longToast(requireActivity(), ErrorUtils.CONNECTION_ERROR_MESSAGE)
+                payments = emptyList()
+                renderPayments()
             }
         }
     }

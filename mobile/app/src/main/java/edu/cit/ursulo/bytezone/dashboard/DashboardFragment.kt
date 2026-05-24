@@ -80,7 +80,7 @@ class DashboardFragment : Fragment() {
             latestPendingPaymentId?.let { openPayment(it) }
         }
 
-        loadDashboard(showErrors = true)
+        loadDashboard(showErrors = false)
         startTimer()
         startSessionPolling()
     }
@@ -281,7 +281,7 @@ class DashboardFragment : Fragment() {
 
         val popup = PopupWindow(
             menu,
-            dp(190),
+            dp(172),
             LinearLayout.LayoutParams.WRAP_CONTENT,
             true
         ).apply {
@@ -299,7 +299,7 @@ class DashboardFragment : Fragment() {
             (activity as? MainActivity)?.logout()
         })
 
-        popup.showAsDropDown(anchor, -dp(138), dp(8), Gravity.END)
+        popup.showAsDropDown(anchor, anchor.width - dp(172), dp(8), Gravity.NO_GRAVITY)
     }
 
     private fun menuItem(label: String, onClick: () -> Unit): TextView {

@@ -57,19 +57,9 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <ImageButton
-                        android:id="@+id/btnMenu"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:background="@drawable/bg_card_subtle"
-                        android:contentDescription="Menu"
-                        android:padding="14dp"
-                        android:src="@drawable/ic_menu" />
-
                     <FrameLayout
                         android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:layout_marginStart="8dp">
+                        android:layout_height="52dp">
 
                         <ImageButton
                             android:id="@+id/btnNotifications"
@@ -93,6 +83,16 @@
                             android:textStyle="bold"
                             android:visibility="gone" />
                     </FrameLayout>
+
+                    <ImageButton
+                        android:id="@+id/btnMenu"
+                        android:layout_width="52dp"
+                        android:layout_height="52dp"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/bg_card_subtle"
+                        android:contentDescription="Menu"
+                        android:padding="14dp"
+                        android:src="@drawable/ic_menu" />
                 </LinearLayout>
             </LinearLayout>
 

@@ -2,6 +2,7 @@ package edu.cit.ursulo.bytezone.auth
 
 import android.os.Bundle
 import android.text.InputType
+import android.util.Log
 import android.util.Patterns
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -9,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes
 import com.google.android.gms.common.api.ApiException
 import edu.cit.ursulo.bytezone.R
 import edu.cit.ursulo.bytezone.databinding.ActivityRegisterBinding
@@ -18,6 +20,12 @@ import edu.cit.ursulo.bytezone.shared.utils.ErrorUtils
 import kotlinx.coroutines.launch
 
 class RegisterActivity : AppCompatActivity() {
+
+    companion object {
+        private const val GOOGLE_TAG = "ByteZoneGoogle"
+        private const val GOOGLE_SETUP_MESSAGE =
+            "Google login setup is incomplete. Please check Android OAuth client, SHA fingerprint, and Web Client ID."
+    }
 
     private lateinit var binding: ActivityRegisterBinding
     private lateinit var authApi: AuthApiService
@@ -30,14 +38,18 @@ class RegisterActivity : AppCompatActivity() {
         val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
         try {
             val account = task.getResult(ApiException::class.java)
+            Log.d(GOOGLE_TAG, "Google sign-in completed")
             val idToken = account.idToken
+            Log.d(GOOGLE_TAG, "ID token present: ${!idToken.isNullOrBlank()}")
             if (idToken.isNullOrBlank()) {
-                Toast.makeText(this, "Google login did not return an ID token.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, GOOGLE_SETUP_MESSAGE, Toast.LENGTH_LONG).show()
                 return@registerForActivityResult
             }
             exchangeGoogleIdToken(idToken)
         } catch (e: ApiException) {
-            Toast.makeText(this, "Google login was cancelled or unavailable.", Toast.LENGTH_LONG).show()
+            val status = GoogleSignInStatusCodes.getStatusCodeString(e.statusCode)
+            Log.w(GOOGLE_TAG, "Google sign-in failed: ApiException status/message ${e.statusCode}/$status: ${e.message}")
+            Toast.makeText(this, GOOGLE_SETUP_MESSAGE, Toast.LENGTH_LONG).show()
         }
     }
 
@@ -105,13 +117,17 @@ class RegisterActivity : AppCompatActivity() {
                 )
 
                 if (response.isSuccessful && response.body() != null) {
-                    Toast.makeText(this@RegisterActivity, "Registration successful", Toast.LENGTH_LONG).show()
-                    finish()
+                    handleEmailRegisterSuccess(response.body()!!, email, password)
                 } else {
-                    Toast.makeText(this@RegisterActivity, ErrorUtils.parseError(response), Toast.LENGTH_LONG).show()
+                    val message = ErrorUtils.parseError(response)
+                    if (!tryLoginAfterRegister(email, password)) {
+                        Toast.makeText(this@RegisterActivity, message, Toast.LENGTH_LONG).show()
+                    }
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@RegisterActivity, ErrorUtils.CONNECTION_ERROR_MESSAGE, Toast.LENGTH_LONG).show()
+                if (!tryLoginAfterRegister(email, password)) {
+                    Toast.makeText(this@RegisterActivity, ErrorUtils.CONNECTION_ERROR_MESSAGE, Toast.LENGTH_LONG).show()
+                }
             } finally {
                 binding.btnRegister.isEnabled = true
                 binding.btnRegister.text = "Create account"
@@ -144,49 +160,89 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun startGoogleSignIn() {
+        Log.d(GOOGLE_TAG, "Google button clicked")
         val clientId = getString(R.string.google_server_client_id).trim()
+        Log.d(GOOGLE_TAG, "google_server_client_id loaded: ${clientId.isNotBlank()}")
         if (clientId.isBlank()) {
-            // Google login needs an OAuth client ID that the backend accepts, plus the
-            // Android package name (edu.cit.ursulo.bytezone) and debug/release SHA-1
-            // registered in Google Cloud. The returned ID token is exchanged through
-            // backend /api/auth/google; never hardcode private secrets in the app.
-            Toast.makeText(
-                this,
-                "Google login is not configured yet for Android. Please use email login for now.",
-                Toast.LENGTH_LONG
-            ).show()
+            Toast.makeText(this, GOOGLE_SETUP_MESSAGE, Toast.LENGTH_LONG).show()
             return
         }
 
+        // Requires Google Cloud Android OAuth for package edu.cit.ursulo.bytezone
+        // with debug/release SHA-1 and SHA-256 fingerprints. Use the Web Client ID
+        // as google_server_client_id so backend /api/auth/google can verify audience.
         val options = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestEmail()
+            .requestProfile()
             .requestIdToken(clientId)
             .build()
         val client = GoogleSignIn.getClient(this, options)
-        googleSignInLauncher.launch(client.signInIntent)
+        Log.d(GOOGLE_TAG, "Starting Google sign-in flow")
+        client.signOut().addOnCompleteListener {
+            googleSignInLauncher.launch(client.signInIntent)
+        }
     }
 
     private fun exchangeGoogleIdToken(idToken: String) {
         lifecycleScope.launch {
             try {
+                Log.d(GOOGLE_TAG, "Calling backend /api/auth/google")
                 val response = authApi.googleLogin(GoogleLoginRequest(idToken))
+                Log.d(GOOGLE_TAG, "Backend Google login response code: ${response.code()}")
                 if (response.isSuccessful && response.body() != null) {
+                    Log.d(GOOGLE_TAG, "Backend Google login message: success")
                     handleGoogleAuthSuccess(response.body()!!)
                 } else {
-                    Toast.makeText(this@RegisterActivity, ErrorUtils.parseError(response), Toast.LENGTH_LONG).show()
+                    val message = ErrorUtils.parseError(response)
+                    Log.w(GOOGLE_TAG, "Backend Google login message: $message")
+                    Toast.makeText(this@RegisterActivity, message, Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
+                Log.w(GOOGLE_TAG, "Backend Google login message: ${e.javaClass.simpleName}")
                 Toast.makeText(this@RegisterActivity, ErrorUtils.CONNECTION_ERROR_MESSAGE, Toast.LENGTH_LONG).show()
             }
         }
     }
 
+    private suspend fun tryLoginAfterRegister(email: String, password: String): Boolean {
+        return try {
+            val loginResponse = authApi.login(LoginRequest(email = email, password = password))
+            val auth = loginResponse.body()
+            if (loginResponse.isSuccessful && auth != null && !auth.accessToken.isNullOrBlank()) {
+                handleAuthSuccess(auth, "Registration successful")
+                true
+            } else {
+                false
+            }
+        } catch (ignored: Exception) {
+            false
+        }
+    }
+
+    private fun handleEmailRegisterSuccess(auth: AuthResponse, email: String, password: String) {
+        if (!auth.accessToken.isNullOrBlank() && auth.user != null) {
+            handleAuthSuccess(auth, "Registration successful")
+            return
+        }
+
+        lifecycleScope.launch {
+            if (!tryLoginAfterRegister(email, password)) {
+                Toast.makeText(this@RegisterActivity, "Registration successful. Please log in.", Toast.LENGTH_LONG).show()
+                finish()
+            }
+        }
+    }
+
     private fun handleGoogleAuthSuccess(auth: AuthResponse) {
+        handleAuthSuccess(auth, "Google login successful")
+    }
+
+    private fun handleAuthSuccess(auth: AuthResponse, successMessage: String) {
         val user = auth.user
         val token = auth.accessToken
 
         if (token.isNullOrBlank() || user == null) {
-            Toast.makeText(this, "Google login failed. Missing session data.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Login failed. Missing session data.", Toast.LENGTH_LONG).show()
             return
         }
 
@@ -209,7 +265,7 @@ class RegisterActivity : AppCompatActivity() {
             profileImageUrl = user.profileImageUrl
         )
 
-        Toast.makeText(this, "Google login successful", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, successMessage, Toast.LENGTH_SHORT).show()
         startActivity(android.content.Intent(this, MainActivity::class.java))
         finish()
     }

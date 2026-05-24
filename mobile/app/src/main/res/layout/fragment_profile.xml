@@ -56,7 +56,8 @@
                 android:background="@drawable/bg_auth_button"
                 android:contentDescription="Change profile photo"
                 android:padding="10dp"
-                android:src="@drawable/ic_edit" />
+                android:src="@drawable/ic_edit"
+                android:tint="@color/black" />
         </FrameLayout>
 
         <Button

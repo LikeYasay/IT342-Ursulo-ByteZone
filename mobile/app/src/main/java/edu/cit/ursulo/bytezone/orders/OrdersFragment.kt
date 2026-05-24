@@ -87,7 +87,12 @@ class OrdersFragment : Fragment() {
                 renderCart()
                 renderLatestOrder(orders.firstOrNull())
             } catch (e: Exception) {
-                UiUtils.longToast(requireActivity(), ErrorUtils.CONNECTION_ERROR_MESSAGE)
+                snacks = emptyList()
+                stations = emptyList()
+                setupStations()
+                renderSnacks()
+                renderCart()
+                renderLatestOrder(null)
             }
         }
     }

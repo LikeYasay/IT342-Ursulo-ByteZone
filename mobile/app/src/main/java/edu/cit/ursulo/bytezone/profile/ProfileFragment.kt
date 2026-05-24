@@ -86,7 +86,7 @@ class ProfileFragment : Fragment() {
                     UiUtils.longToast(requireActivity(), UiUtils.errorFrom(response))
                 }
             } catch (e: Exception) {
-                UiUtils.longToast(requireActivity(), ErrorUtils.CONNECTION_ERROR_MESSAGE)
+                currentUser?.let { bindUser(it) }
             }
         }
     }

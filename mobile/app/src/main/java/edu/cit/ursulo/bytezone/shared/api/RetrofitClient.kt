@@ -24,7 +24,8 @@ object RetrofitClient {
 
     private fun buildRetrofit(context: Context): Retrofit {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = HttpLoggingInterceptor.Level.BASIC
+            redactHeader("Authorization")
         }
 
         val client = OkHttpClient.Builder()
