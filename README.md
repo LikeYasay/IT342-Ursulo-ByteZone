@@ -1,4 +1,5 @@
 ````md
+
 # ByteZone
 
 **ByteZone** is a computer café management system designed to centralize customer accounts, station booking, station session timing, snack ordering, announcements, payment tracking, transaction history, and role-based staff/admin operations in one integrated platform.
