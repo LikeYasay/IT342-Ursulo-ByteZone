@@ -399,6 +399,7 @@ export default function UserDashboard() {
   const pendingPayments = unpaidPayments.length;
 
   const displayName = user?.fullName || "Player";
+  const firstName = displayName.trim().split(/\s+/)[0] || "Player";
   const displayInitial = displayName.charAt(0).toUpperCase();
   const profileImageUrl = getUserImageUrl(user);
 
@@ -666,7 +667,7 @@ export default function UserDashboard() {
             )}
 
             <div className="dash-section">
-              <SectionCard title="Like's" accentWord="Status">
+              <SectionCard title={`${firstName}'s`} accentWord="Status">
                 <div style={{ display: "flex", gap: "12px" }}>
                   <StatCard label="Total Hours Played" value={totalHours} />
                   <StatCard label="Tournament Won" value={tournamentWins} />
