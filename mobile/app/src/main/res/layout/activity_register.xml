@@ -168,6 +168,15 @@
                         android:textColor="#FFFFFF"
                         android:textColorHint="#5F6672"
                         android:textSize="14sp" />
+
+                    <ImageButton
+                        android:id="@+id/btnTogglePassword"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:background="@android:color/transparent"
+                        android:contentDescription="Show or hide password"
+                        android:padding="10dp"
+                        android:src="@drawable/ic_eye" />
                 </LinearLayout>
 
                 <TextView
@@ -205,6 +214,15 @@
                         android:textColor="#FFFFFF"
                         android:textColorHint="#5F6672"
                         android:textSize="14sp" />
+
+                    <ImageButton
+                        android:id="@+id/btnToggleConfirmPassword"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:background="@android:color/transparent"
+                        android:contentDescription="Show or hide confirm password"
+                        android:padding="10dp"
+                        android:src="@drawable/ic_eye" />
                 </LinearLayout>
 
                 <Button
@@ -218,6 +236,19 @@
                     android:textAllCaps="false"
                     android:textColor="#FFFFFF"
                     android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btnGoogleRegister"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_google_button"
+                    android:backgroundTint="@null"
+                    android:text="Continue with Google"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:textSize="15sp"
                     android:textStyle="bold" />
 
                 <LinearLayout

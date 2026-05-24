@@ -1,6 +1,7 @@
 package edu.cit.ursulo.bytezone.shared.api
 
-import edu.cit.ursulo.bytezone.auth.AuthApiService
+import android.content.Context
+import edu.cit.ursulo.bytezone.auth.SessionManager
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -8,20 +9,33 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
 
-    private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
+    @Volatile
+    private var retrofit: Retrofit? = null
+
+    private fun getRetrofit(context: Context): Retrofit {
+        return retrofit ?: synchronized(this) {
+            retrofit ?: buildRetrofit(context.applicationContext).also { retrofit = it }
+        }
     }
 
-    private val client = OkHttpClient.Builder()
-        .addInterceptor(loggingInterceptor)
-        .build()
+    fun <T> create(context: Context, service: Class<T>): T {
+        return getRetrofit(context).create(service)
+    }
 
-    val api: AuthApiService by lazy {
-        Retrofit.Builder()
-            .baseUrl(ApiConfig.BASE_URL)
+    private fun buildRetrofit(context: Context): Retrofit {
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+
+        val client = OkHttpClient.Builder()
+            .addInterceptor(AuthInterceptor(SessionManager(context)))
+            .addInterceptor(loggingInterceptor)
+            .build()
+
+        return Retrofit.Builder()
+            .baseUrl(ApiConstants.BASE_URL)
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(AuthApiService::class.java)
     }
 }

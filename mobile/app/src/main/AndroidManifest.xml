@@ -16,7 +16,11 @@
         android:usesCleartextTraffic="true">
 
         <activity
-            android:name=".home.HomeActivity"
+            android:name=".payments.SandboxCheckoutActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".main.MainActivity"
             android:exported="false" />
 
         <activity

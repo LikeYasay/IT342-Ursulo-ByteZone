@@ -2,4 +2,15 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="bytezone_bg">#000000</color>
+    <color name="bytezone_card">#1C1C1C</color>
+    <color name="bytezone_inner">#10131A</color>
+    <color name="bytezone_cyan">#39D5FF</color>
+    <color name="bytezone_blue">#0EA5E9</color>
+    <color name="bytezone_purple">#7C3AED</color>
+    <color name="bytezone_muted">#8A8F98</color>
+    <color name="bytezone_border">#24313B</color>
+    <color name="bytezone_success">#22C55E</color>
+    <color name="bytezone_error">#EF4444</color>
+    <color name="bytezone_warning">#F59E0B</color>
 </resources>

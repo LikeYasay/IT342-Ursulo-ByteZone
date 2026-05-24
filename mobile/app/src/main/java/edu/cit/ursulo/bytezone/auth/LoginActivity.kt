@@ -2,12 +2,14 @@ package edu.cit.ursulo.bytezone.auth
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.InputType
 import android.util.Patterns
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import edu.cit.ursulo.bytezone.R
 import edu.cit.ursulo.bytezone.databinding.ActivityLoginBinding
-import edu.cit.ursulo.bytezone.home.HomeActivity
+import edu.cit.ursulo.bytezone.main.MainActivity
 import edu.cit.ursulo.bytezone.shared.api.RetrofitClient
 import edu.cit.ursulo.bytezone.shared.utils.ErrorUtils
 import kotlinx.coroutines.launch
@@ -16,6 +18,8 @@ class LoginActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityLoginBinding
     private lateinit var sessionManager: SessionManager
+    private lateinit var authApi: AuthApiService
+    private var passwordVisible = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,24 +27,29 @@ class LoginActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         sessionManager = SessionManager(this)
+        authApi = RetrofitClient.create(this, AuthApiService::class.java)
 
-        if (sessionManager.isLoggedIn()) {
-            startActivity(Intent(this, HomeActivity::class.java))
+        if (sessionManager.isLoggedIn() && sessionManager.isUserSession()) {
+            startActivity(Intent(this, MainActivity::class.java))
             finish()
+            return
         }
 
-        binding.btnLogin.setOnClickListener {
-            loginUser()
+        if (sessionManager.isLoggedIn() && !sessionManager.isUserSession()) {
+            sessionManager.clearSession()
         }
 
+        binding.btnLogin.setOnClickListener { loginUser() }
         binding.tvGoToRegister.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
         }
+        binding.btnTogglePassword.setOnClickListener { togglePasswordVisibility() }
+        binding.btnGoogleLogin.setOnClickListener { startGoogleLogin() }
     }
 
     private fun loginUser() {
         val email = binding.etEmail.text.toString().trim()
-        val password = binding.etPassword.text.toString().trim()
+        val password = binding.etPassword.text.toString()
 
         var hasError = false
 
@@ -60,45 +69,91 @@ class LoginActivity : AppCompatActivity() {
         if (hasError) return
 
         binding.btnLogin.isEnabled = false
-        binding.btnLogin.text = "Signing In..."
+        binding.btnLogin.text = "Signing in..."
 
         lifecycleScope.launch {
             try {
-                val response = RetrofitClient.api.login(
-                    LoginRequest(
-                        email = email,
-                        password = password
-                    )
-                )
+                val response = authApi.login(LoginRequest(email = email, password = password))
 
                 if (response.isSuccessful && response.body() != null) {
-                    val auth = response.body()!!
-
-                    sessionManager.saveSession(
-                        token = auth.accessToken,
-                        fullName = auth.user.fullName,
-                        email = auth.user.email
-                    )
-
-                    Toast.makeText(this@LoginActivity, "Login successful", Toast.LENGTH_SHORT).show()
-                    startActivity(Intent(this@LoginActivity, HomeActivity::class.java))
-                    finish()
+                    handleAuthSuccess(response.body()!!)
                 } else {
-                    Toast.makeText(
-                        this@LoginActivity,
-                        ErrorUtils.parseError(response),
-                        Toast.LENGTH_LONG
-                    ).show()
+                    Toast.makeText(this@LoginActivity, ErrorUtils.parseError(response), Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(
-                    this@LoginActivity,
-                    "Connection error: ${e.message}",
-                    Toast.LENGTH_LONG
-                ).show()
+                Toast.makeText(this@LoginActivity, "Connection error: ${e.message}", Toast.LENGTH_LONG).show()
             } finally {
                 binding.btnLogin.isEnabled = true
-                binding.btnLogin.text = "Login"
+                binding.btnLogin.text = "Sign in"
+            }
+        }
+    }
+
+    private fun handleAuthSuccess(auth: AuthResponse) {
+        val user = auth.user
+        val token = auth.accessToken
+
+        if (token.isNullOrBlank() || user == null) {
+            Toast.makeText(this, "Login failed. Missing session data.", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        if (user.role != "USER") {
+            sessionManager.clearSession()
+            Toast.makeText(
+                this,
+                "Mobile app is for user accounts only. Please use the web admin dashboard.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
+        sessionManager.saveSession(
+            token = token,
+            fullName = user.fullName.orEmpty(),
+            email = user.email.orEmpty(),
+            role = user.role,
+            userId = user.id,
+            profileImageUrl = user.profileImageUrl
+        )
+
+        Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT).show()
+        startActivity(Intent(this, MainActivity::class.java))
+        finish()
+    }
+
+    private fun togglePasswordVisibility() {
+        passwordVisible = !passwordVisible
+        binding.etPassword.inputType = if (passwordVisible) {
+            InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+        } else {
+            InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+        }
+        binding.btnTogglePassword.setImageResource(if (passwordVisible) R.drawable.ic_eye_off else R.drawable.ic_eye)
+        binding.etPassword.setSelection(binding.etPassword.text?.length ?: 0)
+    }
+
+    private fun startGoogleLogin() {
+        // Configure Google Identity Services or Google Sign-In in the Android project,
+        // then pass the returned ID token to exchangeGoogleIdToken(idToken).
+        Toast.makeText(
+            this,
+            "Google sign-in UI is ready. Add Android OAuth client setup to enable token exchange.",
+            Toast.LENGTH_LONG
+        ).show()
+    }
+
+    private fun exchangeGoogleIdToken(idToken: String) {
+        lifecycleScope.launch {
+            try {
+                val response = authApi.googleLogin(GoogleLoginRequest(idToken))
+                if (response.isSuccessful && response.body() != null) {
+                    handleAuthSuccess(response.body()!!)
+                } else {
+                    Toast.makeText(this@LoginActivity, ErrorUtils.parseError(response), Toast.LENGTH_LONG).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this@LoginActivity, "Google login failed: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
     }
