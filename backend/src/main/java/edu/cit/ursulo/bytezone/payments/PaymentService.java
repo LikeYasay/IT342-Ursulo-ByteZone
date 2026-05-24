@@ -138,13 +138,13 @@ public class PaymentService {
                 NotificationType.PAYMENT_UPDATE
         );
 
-        if (resultStatus == PaymentStatus.PAID) {
-            emailService.sendPaymentConfirmedEmail(
-                    saved.getUser().getEmail(),
-                    saved.getUser().getFullName(),
-                    saved.getId()
-            );
-        }
+        // if (resultStatus == PaymentStatus.PAID) {
+        //     emailService.sendPaymentConfirmedEmail(
+        //             saved.getUser().getEmail(),
+        //             saved.getUser().getFullName(),
+        //             saved.getId()
+        //     );
+        // }
 
         return saved;
     }
