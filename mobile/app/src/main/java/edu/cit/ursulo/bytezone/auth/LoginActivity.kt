@@ -5,8 +5,12 @@ import android.os.Bundle
 import android.text.InputType
 import android.util.Patterns
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import edu.cit.ursulo.bytezone.R
 import edu.cit.ursulo.bytezone.databinding.ActivityLoginBinding
 import edu.cit.ursulo.bytezone.main.MainActivity
@@ -20,6 +24,22 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var sessionManager: SessionManager
     private lateinit var authApi: AuthApiService
     private var passwordVisible = false
+    private val googleSignInLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.getResult(ApiException::class.java)
+            val idToken = account.idToken
+            if (idToken.isNullOrBlank()) {
+                Toast.makeText(this, "Google login did not return an ID token.", Toast.LENGTH_LONG).show()
+                return@registerForActivityResult
+            }
+            exchangeGoogleIdToken(idToken)
+        } catch (e: ApiException) {
+            Toast.makeText(this, "Google login was cancelled or unavailable.", Toast.LENGTH_LONG).show()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -134,16 +154,26 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun startGoogleLogin() {
-        // Android Google login needs a Google Cloud Android OAuth client ID configured
-        // with this app package (edu.cit.ursulo.bytezone) and the release/debug SHA-1.
-        // Once the ID token is returned by Google Identity Services, pass it to
-        // exchangeGoogleIdToken(idToken), which posts to the backend /api/auth/google
-        // endpoint and stores the ByteZone JWT. Do not hardcode private secrets here.
-        Toast.makeText(
-            this,
-            "Google login is not configured yet for Android. Please use email login for now.",
-            Toast.LENGTH_LONG
-        ).show()
+        val clientId = getString(R.string.google_server_client_id).trim()
+        if (clientId.isBlank()) {
+            // Google login needs an OAuth client ID that the backend accepts, plus the
+            // Android package name (edu.cit.ursulo.bytezone) and debug/release SHA-1
+            // registered in Google Cloud. The returned ID token is exchanged through
+            // backend /api/auth/google; never hardcode private secrets in the app.
+            Toast.makeText(
+                this,
+                "Google login is not configured yet for Android. Please use email login for now.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
+        val options = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestEmail()
+            .requestIdToken(clientId)
+            .build()
+        val client = GoogleSignIn.getClient(this, options)
+        googleSignInLauncher.launch(client.signInIntent)
     }
 
     private fun exchangeGoogleIdToken(idToken: String) {

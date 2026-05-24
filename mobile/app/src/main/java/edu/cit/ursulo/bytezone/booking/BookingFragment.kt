@@ -1,13 +1,13 @@
 package edu.cit.ursulo.bytezone.booking
 
 import android.app.DatePickerDialog
-import android.app.TimePickerDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.GridLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
@@ -36,13 +36,31 @@ class BookingFragment : Fragment() {
     private lateinit var paymentApi: PaymentApiService
     private var stations: List<StationDto> = emptyList()
     private var selectedStation: StationDto? = null
+    private val ratePerHour = 50.0
+    private val timeOptions = listOf(
+        "Select time",
+        "08:00",
+        "09:00",
+        "10:00",
+        "11:00",
+        "12:00",
+        "13:00",
+        "14:00",
+        "15:00",
+        "16:00",
+        "17:00",
+        "18:00",
+        "19:00",
+        "20:00"
+    )
 
     private val durations = listOf(
         DurationOption("Select duration", 0),
-        DurationOption("1 hour", 60),
-        DurationOption("2 hours", 120),
-        DurationOption("3 hours", 180),
-        DurationOption("4 hours", 240)
+        DurationOption("1 Hour", 60),
+        DurationOption("2 Hours", 120),
+        DurationOption("3 Hours", 180),
+        DurationOption("4 Hours", 240),
+        DurationOption("5 Hours", 300)
     )
 
     override fun onCreateView(
@@ -59,8 +77,8 @@ class BookingFragment : Fragment() {
         paymentApi = RetrofitClient.create(requireContext(), PaymentApiService::class.java)
 
         setupDurationSpinner()
+        setupTimeSpinner()
         binding.etDate.setOnClickListener { showDatePicker() }
-        binding.etTime.setOnClickListener { showTimePicker() }
         binding.btnConfirmBooking.setOnClickListener { confirmBooking() }
         binding.btnClearBooking.setOnClickListener { clearForm() }
 
@@ -73,13 +91,7 @@ class BookingFragment : Fragment() {
     }
 
     private fun setupDurationSpinner() {
-        val adapter = ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_spinner_item,
-            durations.map { it.label }
-        )
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.spDuration.adapter = adapter
+        binding.spDuration.adapter = darkSpinnerAdapter(durations.map { it.label })
         binding.spDuration.setSelection(0)
         binding.spDuration.setOnItemSelectedListener(object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
@@ -103,6 +115,35 @@ class BookingFragment : Fragment() {
         }
     }
 
+    private fun setupTimeSpinner() {
+        binding.spTime.adapter = darkSpinnerAdapter(
+            timeOptions.map { if (it == "Select time") it else DateTimeUtils.formatTime(it) }
+        )
+        binding.spTime.setSelection(0)
+    }
+
+    private fun darkSpinnerAdapter(labels: List<String>): ArrayAdapter<String> {
+        return object : ArrayAdapter<String>(requireContext(), android.R.layout.simple_spinner_item, labels) {
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                return (super.getView(position, convertView, parent) as TextView).apply {
+                    setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
+                    textSize = 14f
+                }
+            }
+
+            override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View {
+                return (super.getDropDownView(position, convertView, parent) as TextView).apply {
+                    setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
+                    setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.bytezone_bg))
+                    textSize = 14f
+                    setPadding(dp(14), dp(12), dp(14), dp(12))
+                }
+            }
+        }.apply {
+            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        }
+    }
+
     private fun renderStations() {
         binding.stationsContainer.removeAllViews()
         if (stations.isEmpty()) {
@@ -110,18 +151,26 @@ class BookingFragment : Fragment() {
             return
         }
 
-        stations.forEach { station ->
-            binding.stationsContainer.addView(stationCard(station))
+        val grid = GridLayout(requireContext()).apply {
+            columnCount = 4
+            rowCount = (stations.size + 3) / 4
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
         }
+
+        stations.forEach { station -> grid.addView(stationCard(station)) }
+        binding.stationsContainer.addView(grid)
     }
 
     private fun stationCard(station: StationDto): View {
         val available = station.status == "AVAILABLE"
         val selected = selectedStation?.id == station.id
         val card = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = android.view.Gravity.CENTER_VERTICAL
-            setPadding(dp(14), dp(12), dp(14), dp(12))
+            orientation = LinearLayout.VERTICAL
+            gravity = android.view.Gravity.CENTER
+            setPadding(dp(6), dp(8), dp(6), dp(8))
             setBackgroundResource(
                 when {
                     selected -> R.drawable.bg_card_selected
@@ -129,10 +178,12 @@ class BookingFragment : Fragment() {
                     else -> R.drawable.bg_card_disabled
                 }
             )
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { bottomMargin = dp(10) }
+            layoutParams = GridLayout.LayoutParams().apply {
+                width = 0
+                height = dp(64)
+                columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
+                setMargins(dp(4), dp(4), dp(4), dp(4))
+            }
             isEnabled = available
             alpha = if (available) 1f else 0.62f
             setOnClickListener {
@@ -144,12 +195,27 @@ class BookingFragment : Fragment() {
             }
         }
 
-        val name = text(station.stationNo ?: "Station #${station.id}", 16, R.color.white, true)
-        card.addView(name, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        val name = text(station.stationNo ?: "S${station.id}", 14, R.color.white, true).apply {
+            gravity = android.view.Gravity.CENTER
+            maxLines = 1
+        }
+        card.addView(name)
 
-        val status = text(station.status ?: "N/A", 13, if (available) R.color.bytezone_cyan else R.color.bytezone_muted, true)
-        status.setBackgroundResource(R.drawable.bg_status_pill)
-        status.setPadding(dp(10), dp(6), dp(10), dp(6))
+        val status = text(
+            when (station.status) {
+                "AVAILABLE" -> "Open"
+                "IN_USE" -> "In use"
+                "RESERVED" -> "Reserved"
+                else -> station.status ?: "N/A"
+            },
+            10,
+            if (available || selected) R.color.bytezone_cyan else R.color.bytezone_muted,
+            true
+        ).apply {
+            gravity = android.view.Gravity.CENTER
+            maxLines = 1
+            setPadding(0, dp(4), 0, 0)
+        }
         card.addView(status)
 
         return card
@@ -158,10 +224,10 @@ class BookingFragment : Fragment() {
     private fun confirmBooking() {
         val station = selectedStation
         val date = binding.etDate.text.toString().trim()
-        val time = binding.etTime.text.toString().trim()
+        val time = timeOptions.getOrNull(binding.spTime.selectedItemPosition).orEmpty()
         val duration = durations.getOrNull(binding.spDuration.selectedItemPosition)?.minutes ?: 0
 
-        if (station?.id == null || date.isBlank() || time.isBlank() || duration <= 0) {
+        if (station?.id == null || date.isBlank() || time == "Select time" || duration <= 0) {
             UiUtils.longToast(requireActivity(), "Please complete all booking details.")
             return
         }
@@ -225,7 +291,7 @@ class BookingFragment : Fragment() {
         selectedStation = null
         binding.tvSelectedStation.text = "Selected station: None"
         binding.etDate.setText("")
-        binding.etTime.setText("")
+        binding.spTime.setSelection(0)
         binding.spDuration.setSelection(0)
         updateBookingTotal()
         renderStations()
@@ -259,22 +325,9 @@ class BookingFragment : Fragment() {
         }.show()
     }
 
-    private fun showTimePicker() {
-        val calendar = Calendar.getInstance()
-        TimePickerDialog(
-            requireContext(),
-            { _, hour, minute ->
-                binding.etTime.setText(DateTimeUtils.timeIso(hour, minute))
-            },
-            calendar.get(Calendar.HOUR_OF_DAY),
-            calendar.get(Calendar.MINUTE),
-            true
-        ).show()
-    }
-
     private fun updateBookingTotal() {
         val minutes = durations.getOrNull(binding.spDuration.selectedItemPosition)?.minutes ?: 0
-        val total = (minutes / 60.0) * 60.0
+        val total = (minutes / 60.0) * ratePerHour
         binding.tvBookingTotal.text = "Total: ${DateTimeUtils.formatCurrency(total)}"
     }
 

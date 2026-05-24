@@ -56,9 +56,6 @@ class ProfileFragment : Fragment() {
         sessionManager = SessionManager(requireContext())
 
         binding.btnSaveProfile.setOnClickListener { saveProfile() }
-        binding.btnLogout.setOnClickListener {
-            UiUtils.logoutToLogin(requireActivity(), sessionManager)
-        }
         binding.btnPickProfileImage.setOnClickListener {
             pickImageLauncher.launch("image/*")
         }

@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.HorizontalScrollView
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -94,9 +95,29 @@ class OrdersFragment : Fragment() {
     private fun setupStations() {
         val labels = mutableListOf("Select station")
         labels.addAll(stations.map { it.stationNo ?: "Station #${it.id}" })
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, labels)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.spOrderStation.adapter = adapter
+        binding.spOrderStation.adapter = darkSpinnerAdapter(labels)
+    }
+
+    private fun darkSpinnerAdapter(labels: List<String>): ArrayAdapter<String> {
+        return object : ArrayAdapter<String>(requireContext(), android.R.layout.simple_spinner_item, labels) {
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                return (super.getView(position, convertView, parent) as TextView).apply {
+                    setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
+                    textSize = 14f
+                }
+            }
+
+            override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View {
+                return (super.getDropDownView(position, convertView, parent) as TextView).apply {
+                    setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
+                    setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.bytezone_bg))
+                    textSize = 14f
+                    setPadding(dp(14), dp(12), dp(14), dp(12))
+                }
+            }
+        }.apply {
+            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        }
     }
 
     private fun renderSnacks() {
@@ -118,28 +139,52 @@ class OrdersFragment : Fragment() {
                 binding.snacksContainer.addView(text(category, 18, R.color.white, true).apply {
                     setPadding(0, dp(8), 0, dp(10))
                 })
-                items.forEach { snack -> binding.snacksContainer.addView(snackCard(snack)) }
+                binding.snacksContainer.addView(snackCarousel(items))
             }
+    }
+
+    private fun snackCarousel(items: List<SnackDto>): View {
+        val scroll = HorizontalScrollView(requireContext()).apply {
+            overScrollMode = View.OVER_SCROLL_NEVER
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = dp(18) }
+        }
+
+        val row = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        items.forEach { snack -> row.addView(snackCard(snack)) }
+        scroll.addView(row)
+        return scroll
     }
 
     private fun snackCard(snack: SnackDto): View {
         val snackId = snack.id ?: -1L
         val quantity = cart[snackId]?.quantity ?: 0
         val card = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = android.view.Gravity.CENTER_VERTICAL
+            orientation = LinearLayout.VERTICAL
             setBackgroundResource(if (quantity > 0) R.drawable.bg_card_selected else R.drawable.bg_card_subtle)
             setPadding(dp(12), dp(12), dp(12), dp(12))
             layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(178),
                 LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { bottomMargin = dp(10) }
+            ).apply { marginEnd = dp(12) }
         }
 
         val image = ImageView(requireContext()).apply {
             setBackgroundResource(R.drawable.bg_card_disabled)
             scaleType = ImageView.ScaleType.CENTER_CROP
-            layoutParams = LinearLayout.LayoutParams(dp(64), dp(64)).apply { marginEnd = dp(12) }
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(96)
+            )
         }
         card.addView(image)
         if (!snack.imageUrl.isNullOrBlank()) {
@@ -150,9 +195,14 @@ class OrdersFragment : Fragment() {
 
         val info = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.VERTICAL
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { topMargin = dp(10) }
         }
-        info.addView(text(snack.name ?: "Snack", 16, R.color.white, true))
+        info.addView(text(snack.name ?: "Snack", 15, R.color.white, true).apply {
+            maxLines = 2
+        })
         info.addView(text(DateTimeUtils.formatCurrency(snack.price), 14, R.color.bytezone_cyan, true).apply {
             setPadding(0, dp(4), 0, 0)
         })
@@ -164,6 +214,10 @@ class OrdersFragment : Fragment() {
         val controls = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = android.view.Gravity.CENTER_VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { topMargin = dp(12) }
         }
 
         controls.addView(smallButton("-") {
@@ -171,7 +225,7 @@ class OrdersFragment : Fragment() {
         })
         controls.addView(text(quantity.toString(), 16, R.color.bytezone_cyan, true).apply {
             gravity = android.view.Gravity.CENTER
-            layoutParams = LinearLayout.LayoutParams(dp(34), LinearLayout.LayoutParams.WRAP_CONTENT)
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
         })
         controls.addView(smallButton("+") {
             addToCart(snack)

@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">ByteZone</string>
+    <!-- Set this to the Google OAuth client ID that the backend accepts for /api/auth/google. -->
+    <string name="google_server_client_id"></string>
 </resources>

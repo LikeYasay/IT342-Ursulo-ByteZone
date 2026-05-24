@@ -93,18 +93,13 @@
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
-            <EditText
-                android:id="@+id/etTime"
+            <Spinner
+                android:id="@+id/spTime"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:layout_marginTop="8dp"
                 android:background="@drawable/bg_input_field"
-                android:clickable="true"
-                android:focusable="false"
-                android:hint="Select time"
-                android:paddingHorizontal="14dp"
-                android:textColor="@color/white"
-                android:textColorHint="@color/bytezone_muted" />
+                android:paddingHorizontal="12dp" />
 
             <TextView
                 android:layout_width="wrap_content"

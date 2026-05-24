@@ -1,12 +1,16 @@
 package edu.cit.ursulo.bytezone.dashboard
 
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.PopupWindow
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -22,7 +26,6 @@ import edu.cit.ursulo.bytezone.shared.api.GamingHighlightDto
 import edu.cit.ursulo.bytezone.shared.api.PaymentDto
 import edu.cit.ursulo.bytezone.shared.api.ReservationDto
 import edu.cit.ursulo.bytezone.shared.api.RetrofitClient
-import edu.cit.ursulo.bytezone.shared.api.SnackOrderDto
 import edu.cit.ursulo.bytezone.shared.api.UserDto
 import edu.cit.ursulo.bytezone.shared.utils.DateTimeUtils
 import edu.cit.ursulo.bytezone.shared.utils.ErrorUtils
@@ -70,6 +73,9 @@ class DashboardFragment : Fragment() {
         binding.btnNotifications.setOnClickListener {
             (activity as? MainActivity)?.openNotifications()
         }
+        binding.btnMenu.setOnClickListener {
+            showUserMenu(it)
+        }
         binding.btnPayLatest.setOnClickListener {
             latestPendingPaymentId?.let { openPayment(it) }
         }
@@ -91,7 +97,6 @@ class DashboardFragment : Fragment() {
             try {
                 val user = api.me().body()?.data
                 val reservations = api.myReservations().body()?.data.orEmpty()
-                val orders = api.myOrders().body()?.data.orEmpty()
                 val payments = api.myPayments().body()?.data.orEmpty()
                 val announcements = api.announcements().body()?.data.orEmpty()
                 val session = api.myActiveSession().body()?.data
@@ -104,7 +109,7 @@ class DashboardFragment : Fragment() {
                 renderPendingPayments(payments)
                 renderAnnouncements(announcements)
                 renderUnread(unread)
-                renderActivityMeta(session, reservations, orders, payments)
+                renderActivityMeta()
             } catch (e: Exception) {
                 if (showErrors) {
                     UiUtils.longToast(requireActivity(), ErrorUtils.CONNECTION_ERROR_MESSAGE)
@@ -141,17 +146,8 @@ class DashboardFragment : Fragment() {
         binding.tvTournamentWins.text = (currentUser.tournamentWins ?: 0).toString()
     }
 
-    private fun renderActivityMeta(
-        session: CafeSessionDto?,
-        reservations: List<ReservationDto>,
-        orders: List<SnackOrderDto>,
-        payments: List<PaymentDto>
-    ) {
-        val latestTime = session?.startTime
-            ?: orders.firstOrNull()?.createdAt
-            ?: payments.firstOrNull()?.createdAt
-            ?: reservations.firstOrNull()?.createdAt
-        binding.tvLastPlayed.text = DateTimeUtils.formatDateTime(latestTime)
+    private fun renderActivityMeta() {
+        binding.tvLastPlayed.text = "N/A"
         binding.tvFavoriteGame.text = "N/A"
     }
 
@@ -273,6 +269,45 @@ class DashboardFragment : Fragment() {
 
     private fun openPayment(paymentId: Long) {
         startActivity(Intent(requireContext(), SandboxCheckoutActivity::class.java).putExtra("paymentId", paymentId))
+    }
+
+    private fun showUserMenu(anchor: View) {
+        val context = requireContext()
+        val menu = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundResource(R.drawable.bg_card)
+            setPadding(dp(10), dp(10), dp(10), dp(10))
+        }
+
+        val popup = PopupWindow(
+            menu,
+            dp(190),
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            true
+        ).apply {
+            isOutsideTouchable = true
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            elevation = dp(10).toFloat()
+        }
+
+        menu.addView(menuItem("Profile") {
+            popup.dismiss()
+            (activity as? MainActivity)?.openProfile()
+        })
+        menu.addView(menuItem("Logout") {
+            popup.dismiss()
+            (activity as? MainActivity)?.logout()
+        })
+
+        popup.showAsDropDown(anchor, -dp(138), dp(8), Gravity.END)
+    }
+
+    private fun menuItem(label: String, onClick: () -> Unit): TextView {
+        return text(label, 15, R.color.white, true).apply {
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(14), dp(12), dp(14), dp(12))
+            setOnClickListener { onClick() }
+        }
     }
 
     private fun infoCard(title: String, body: String, footer: String): View {

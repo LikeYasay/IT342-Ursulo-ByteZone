@@ -54,6 +54,14 @@ class MainActivity : AppCompatActivity() {
         openFragment(NotificationsFragment())
     }
 
+    fun openProfile() {
+        openFragment(ProfileFragment())
+    }
+
+    fun logout() {
+        UiUtils.logoutToLogin(this, sessionManager)
+    }
+
     private fun setupBottomNavigation() {
         binding.bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
@@ -61,7 +69,6 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_booking -> openFragment(BookingFragment())
                 R.id.nav_orders -> openFragment(OrdersFragment())
                 R.id.nav_transactions -> openFragment(TransactionHistoryFragment())
-                R.id.nav_profile -> openFragment(ProfileFragment())
             }
             true
         }

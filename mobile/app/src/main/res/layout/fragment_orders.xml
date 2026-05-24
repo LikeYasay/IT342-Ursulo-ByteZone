@@ -32,14 +32,6 @@
             android:textColor="@color/white"
             android:textColorHint="@color/bytezone_muted" />
 
-        <Spinner
-            android:id="@+id/spOrderStation"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="12dp"
-            android:background="@drawable/bg_input_field"
-            android:paddingHorizontal="12dp" />
-
         <LinearLayout
             android:id="@+id/snacksContainer"
             android:layout_width="match_parent"
@@ -63,6 +55,23 @@
                 android:textColor="@color/white"
                 android:textSize="20sp"
                 android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="Select station"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <Spinner
+                android:id="@+id/spOrderStation"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_input_field"
+                android:paddingHorizontal="12dp" />
 
             <LinearLayout
                 android:id="@+id/cartItemsContainer"
